@@ -225,3 +225,33 @@ Health check:
 ```text
 http://localhost:8080/api/health
 ```
+
+## Criar Admin Local
+
+Depois das migrations, crie o primeiro usuario administrativo:
+
+```powershell
+$env:DATABASE_URL="postgres://postgres:postgres@localhost:5432/jimeri?sslmode=disable"
+$env:ADMIN_NAME="Admin"
+$env:ADMIN_EMAIL="admin@jimeri.local"
+$env:ADMIN_PASSWORD="admin123456"
+go run ./cmd/seed-admin
+```
+
+Para rodar a API local com auth:
+
+```powershell
+$env:DATABASE_URL="postgres://postgres:postgres@localhost:5432/jimeri?sslmode=disable"
+$env:ACCESS_TOKEN_SECRET="dev-access-secret"
+$env:REFRESH_COOKIE_SECURE="false"
+go run ./cmd/api
+```
+
+Endpoints iniciais:
+
+```text
+POST /api/auth/login
+POST /api/auth/refresh
+POST /api/auth/logout
+GET  /api/auth/me
+```

@@ -1,22 +1,29 @@
 package config
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 type Config struct {
-	AppEnv             string
-	HTTPAddr          string
-	DatabaseURL       string
-	AccessTokenSecret string
-	RefreshTokenSecret string
+	AppEnv              string
+	HTTPAddr            string
+	DatabaseURL         string
+	AccessTokenSecret   string
+	RefreshCookieName   string
+	RefreshCookieSecure bool
 }
 
 func Load() Config {
+	appEnv := env("APP_ENV", "development")
+
 	return Config{
-		AppEnv:              env("APP_ENV", "development"),
-		HTTPAddr:           env("HTTP_ADDR", ":8080"),
-		DatabaseURL:        env("DATABASE_URL", ""),
-		AccessTokenSecret:  env("ACCESS_TOKEN_SECRET", ""),
-		RefreshTokenSecret: env("REFRESH_TOKEN_SECRET", ""),
+		AppEnv:              appEnv,
+		HTTPAddr:            env("HTTP_ADDR", ":8080"),
+		DatabaseURL:         env("DATABASE_URL", ""),
+		AccessTokenSecret:   env("ACCESS_TOKEN_SECRET", ""),
+		RefreshCookieName:   env("REFRESH_COOKIE_NAME", "jimeri_refresh_token"),
+		RefreshCookieSecure: envBool("REFRESH_COOKIE_SECURE", appEnv == "production"),
 	}
 }
 
@@ -29,3 +36,11 @@ func env(key string, fallback string) string {
 	return value
 }
 
+func envBool(key string, fallback bool) bool {
+	value := strings.ToLower(strings.TrimSpace(os.Getenv(key)))
+	if value == "" {
+		return fallback
+	}
+
+	return value == "1" || value == "true" || value == "yes"
+}

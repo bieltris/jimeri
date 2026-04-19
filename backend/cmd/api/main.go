@@ -26,7 +26,7 @@ func main() {
 	}
 	defer pool.Close()
 
-	router := httpserver.NewRouter(pool)
+	router := httpserver.NewRouter(pool, cfg)
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
@@ -50,4 +50,3 @@ func main() {
 		log.Printf("shutdown server: %v", err)
 	}
 }
-
