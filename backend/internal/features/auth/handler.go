@@ -74,6 +74,10 @@ func (h *Handler) Routes() http.Handler {
 	return router
 }
 
+func (h *Handler) RequireAuth(next http.Handler) http.Handler {
+	return authcore.RequireAuth(h.tokens)(next)
+}
+
 func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	var input loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
