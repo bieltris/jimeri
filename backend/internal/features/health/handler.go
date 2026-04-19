@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	apphttp "github.com/bieltris/jimeri/backend/internal/http"
+	"github.com/bieltris/jimeri/backend/internal/respond"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -20,17 +20,16 @@ func Handle(pool *pgxpool.Pool) http.HandlerFunc {
 		defer cancel()
 
 		if err := pool.Ping(ctx); err != nil {
-			apphttp.JSON(w, http.StatusServiceUnavailable, response{
+			respond.JSON(w, http.StatusServiceUnavailable, response{
 				Status:   "degraded",
 				Database: "unavailable",
 			})
 			return
 		}
 
-		apphttp.JSON(w, http.StatusOK, response{
+		respond.JSON(w, http.StatusOK, response{
 			Status:   "ok",
 			Database: "ok",
 		})
 	}
 }
-
