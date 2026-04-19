@@ -17,6 +17,31 @@ Opcional:
 
 - PostgreSQL local, caso nao queira usar Docker.
 
+## Instalacao Rapida Com Scoop
+
+Se estiver no Windows, o caminho mais simples e usar Scoop.
+
+Instalar ferramentas basicas:
+
+```powershell
+scoop install git go
+```
+
+O Flutter pode exigir o bucket `extras`:
+
+```powershell
+scoop bucket add extras
+scoop install flutter
+```
+
+Instalar PostgreSQL local pelo Scoop:
+
+```powershell
+scoop install postgresql
+```
+
+Depois de instalar novas ferramentas, feche e abra o PowerShell se algum comando ainda nao aparecer no PATH.
+
 ## Ordem Recomendada
 
 1. Instalar Go.
@@ -97,7 +122,9 @@ migrate -version
 
 ## Banco Local
 
-Subir PostgreSQL local:
+### Com Docker
+
+Subir PostgreSQL local com Docker:
 
 ```powershell
 docker compose up -d postgres
@@ -108,6 +135,56 @@ String local:
 ```text
 postgres://postgres:postgres@localhost:5432/jimeri?sslmode=disable
 ```
+
+### Com PostgreSQL Do Scoop
+
+Iniciar o PostgreSQL instalado pelo Scoop:
+
+```powershell
+pg_ctl start -l "$env:USERPROFILE\scoop\apps\postgresql\current\data\postgres.log"
+```
+
+Criar o banco:
+
+```powershell
+createdb -U postgres jimeri
+```
+
+Opcionalmente, definir a senha local do usuario `postgres` para combinar com o `.env.example`:
+
+```powershell
+psql -U postgres -c "ALTER USER postgres PASSWORD 'postgres';"
+```
+
+String local:
+
+```text
+postgres://postgres:postgres@localhost:5432/jimeri?sslmode=disable
+```
+
+Parar o PostgreSQL:
+
+```powershell
+pg_ctl stop
+```
+
+Se o terminal mostrar logs do PostgreSQL e `Ctrl+C` derrubar o banco, inicie usando o `-l` acima para mandar os logs para arquivo.
+
+## Flutter: Erro De Memoria Na Primeira Execucao
+
+Na primeira execucao, o Flutter compila a propria ferramenta e pode consumir bastante memoria.
+
+Se aparecer `Out of memory` em `flutter --version` ou `flutter doctor`:
+
+1. Feche programas pesados.
+2. Feche e abra o PowerShell.
+3. Rode novamente:
+
+```powershell
+flutter doctor
+```
+
+Se continuar, reinicie o Windows e tente de novo. Em maquinas com pouca RAM, confira se a memoria virtual/pagefile do Windows esta habilitada como "gerenciada pelo sistema".
 
 ## Backend
 
@@ -148,4 +225,3 @@ Health check:
 ```text
 http://localhost:8080/api/health
 ```
-
