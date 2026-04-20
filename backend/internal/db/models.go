@@ -48,15 +48,16 @@ type OrderItem struct {
 }
 
 type Payment struct {
-	ID           pgtype.UUID        `json:"id"`
-	ClientID     pgtype.UUID        `json:"client_id"`
-	AmountCents  int64              `json:"amount_cents"`
-	Note         pgtype.Text        `json:"note"`
-	CreatedBy    pgtype.UUID        `json:"created_by"`
-	CancelledAt  pgtype.Timestamptz `json:"cancelled_at"`
-	CancelledBy  pgtype.UUID        `json:"cancelled_by"`
-	CancelReason pgtype.Text        `json:"cancel_reason"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	ID            pgtype.UUID        `json:"id"`
+	ClientID      pgtype.UUID        `json:"client_id"`
+	AmountCents   int64              `json:"amount_cents"`
+	Note          pgtype.Text        `json:"note"`
+	CreatedBy     pgtype.UUID        `json:"created_by"`
+	CancelledAt   pgtype.Timestamptz `json:"cancelled_at"`
+	CancelledBy   pgtype.UUID        `json:"cancelled_by"`
+	CancelReason  pgtype.Text        `json:"cancel_reason"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	PaymentMethod string             `json:"payment_method"`
 }
 
 type Product struct {

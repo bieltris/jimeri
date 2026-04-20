@@ -45,10 +45,11 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	payment, err := h.queries.CreatePayment(r.Context(), db.CreatePaymentParams{
-		ClientID:    input.ClientID,
-		AmountCents: input.AmountCents,
-		Note:        pgconv.TextFromPointer(input.Note),
-		CreatedBy:   currentUser.ID,
+		ClientID:      input.ClientID,
+		AmountCents:   input.AmountCents,
+		PaymentMethod: input.PaymentMethod,
+		Note:          pgconv.TextFromPointer(input.Note),
+		CreatedBy:     currentUser.ID,
 	})
 	if err != nil {
 		respond.Error(w, http.StatusInternalServerError, "could not create payment")

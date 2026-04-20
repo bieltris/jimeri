@@ -2,13 +2,15 @@
 INSERT INTO payments (
     client_id,
     amount_cents,
+    payment_method,
     note,
     created_by
 ) VALUES (
     $1,
     $2,
     $3,
-    $4
+    $4,
+    $5
 )
 RETURNING *;
 
@@ -32,4 +34,3 @@ SET
 WHERE id = $1
   AND cancelled_at IS NULL
 RETURNING *;
-

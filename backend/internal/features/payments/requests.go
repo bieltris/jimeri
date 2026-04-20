@@ -12,9 +12,10 @@ import (
 )
 
 type createPaymentRequest struct {
-	ClientID    pgtype.UUID
-	AmountCents int64
-	Note        *string
+	ClientID      pgtype.UUID
+	AmountCents   int64
+	PaymentMethod string
+	Note          *string
 }
 
 type cancelPaymentRequest struct {
@@ -22,9 +23,10 @@ type cancelPaymentRequest struct {
 }
 
 type createPaymentPayload struct {
-	ClientID    string  `json:"clientId"`
-	AmountCents int64   `json:"amountCents"`
-	Note        *string `json:"note"`
+	ClientID      string  `json:"clientId"`
+	AmountCents   int64   `json:"amountCents"`
+	PaymentMethod string  `json:"paymentMethod"`
+	Note          *string `json:"note"`
 }
 
 type cancelPaymentPayload struct {
@@ -49,10 +51,17 @@ func parseCreatePaymentRequest(w http.ResponseWriter, r *http.Request) (createPa
 		return createPaymentRequest{}, false
 	}
 
+	paymentMethod := strings.TrimSpace(payload.PaymentMethod)
+	if !validPaymentMethod(paymentMethod) {
+		respond.Error(w, http.StatusBadRequest, "invalid payment method")
+		return createPaymentRequest{}, false
+	}
+
 	return createPaymentRequest{
-		ClientID:    clientID,
-		AmountCents: payload.AmountCents,
-		Note:        payload.Note,
+		ClientID:      clientID,
+		AmountCents:   payload.AmountCents,
+		PaymentMethod: paymentMethod,
+		Note:          payload.Note,
 	}, true
 }
 
@@ -78,4 +87,13 @@ func paymentIDParam(w http.ResponseWriter, r *http.Request) (pgtype.UUID, bool) 
 
 func clientIDParam(w http.ResponseWriter, r *http.Request) (pgtype.UUID, bool) {
 	return httpparam.UUID(w, r, "clientID", "invalid client id")
+}
+
+func validPaymentMethod(value string) bool {
+	switch value {
+	case "cash", "pix", "debit_card", "credit_card", "meal_voucher", "bank_transfer", "other":
+		return true
+	default:
+		return false
+	}
 }

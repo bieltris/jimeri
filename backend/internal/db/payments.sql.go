@@ -19,7 +19,7 @@ SET
     cancel_reason = $3
 WHERE id = $1
   AND cancelled_at IS NULL
-RETURNING id, client_id, amount_cents, note, created_by, cancelled_at, cancelled_by, cancel_reason, created_at
+RETURNING id, client_id, amount_cents, note, created_by, cancelled_at, cancelled_by, cancel_reason, created_at, payment_method
 `
 
 type CancelPaymentParams struct {
@@ -41,6 +41,7 @@ func (q *Queries) CancelPayment(ctx context.Context, arg CancelPaymentParams) (P
 		&i.CancelledBy,
 		&i.CancelReason,
 		&i.CreatedAt,
+		&i.PaymentMethod,
 	)
 	return i, err
 }
@@ -49,28 +50,32 @@ const createPayment = `-- name: CreatePayment :one
 INSERT INTO payments (
     client_id,
     amount_cents,
+    payment_method,
     note,
     created_by
 ) VALUES (
     $1,
     $2,
     $3,
-    $4
+    $4,
+    $5
 )
-RETURNING id, client_id, amount_cents, note, created_by, cancelled_at, cancelled_by, cancel_reason, created_at
+RETURNING id, client_id, amount_cents, note, created_by, cancelled_at, cancelled_by, cancel_reason, created_at, payment_method
 `
 
 type CreatePaymentParams struct {
-	ClientID    pgtype.UUID `json:"client_id"`
-	AmountCents int64       `json:"amount_cents"`
-	Note        pgtype.Text `json:"note"`
-	CreatedBy   pgtype.UUID `json:"created_by"`
+	ClientID      pgtype.UUID `json:"client_id"`
+	AmountCents   int64       `json:"amount_cents"`
+	PaymentMethod string      `json:"payment_method"`
+	Note          pgtype.Text `json:"note"`
+	CreatedBy     pgtype.UUID `json:"created_by"`
 }
 
 func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error) {
 	row := q.db.QueryRow(ctx, createPayment,
 		arg.ClientID,
 		arg.AmountCents,
+		arg.PaymentMethod,
 		arg.Note,
 		arg.CreatedBy,
 	)
@@ -85,12 +90,13 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 		&i.CancelledBy,
 		&i.CancelReason,
 		&i.CreatedAt,
+		&i.PaymentMethod,
 	)
 	return i, err
 }
 
 const getPaymentByID = `-- name: GetPaymentByID :one
-SELECT id, client_id, amount_cents, note, created_by, cancelled_at, cancelled_by, cancel_reason, created_at
+SELECT id, client_id, amount_cents, note, created_by, cancelled_at, cancelled_by, cancel_reason, created_at, payment_method
 FROM payments
 WHERE id = $1
 `
@@ -108,12 +114,13 @@ func (q *Queries) GetPaymentByID(ctx context.Context, id pgtype.UUID) (Payment, 
 		&i.CancelledBy,
 		&i.CancelReason,
 		&i.CreatedAt,
+		&i.PaymentMethod,
 	)
 	return i, err
 }
 
 const listClientPayments = `-- name: ListClientPayments :many
-SELECT id, client_id, amount_cents, note, created_by, cancelled_at, cancelled_by, cancel_reason, created_at
+SELECT id, client_id, amount_cents, note, created_by, cancelled_at, cancelled_by, cancel_reason, created_at, payment_method
 FROM payments
 WHERE client_id = $1
 ORDER BY created_at DESC
@@ -138,6 +145,7 @@ func (q *Queries) ListClientPayments(ctx context.Context, clientID pgtype.UUID) 
 			&i.CancelledBy,
 			&i.CancelReason,
 			&i.CreatedAt,
+			&i.PaymentMethod,
 		); err != nil {
 			return nil, err
 		}
