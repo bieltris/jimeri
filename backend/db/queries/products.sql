@@ -1,42 +1,94 @@
 -- name: CreateProduct :one
-INSERT INTO products (
-    name,
-    category,
-    price_cents
-) VALUES (
-    $1,
-    $2,
-    $3
+WITH inserted AS (
+    INSERT INTO products (
+        name,
+        category_id,
+        price_cents
+    ) VALUES (
+        $1,
+        sqlc.narg('category_id')::uuid,
+        $2
+    )
+    RETURNING *
 )
-RETURNING *;
+SELECT
+    inserted.id,
+    inserted.name,
+    inserted.category_id,
+    product_categories.name AS category_name,
+    inserted.price_cents,
+    inserted.active,
+    inserted.created_at,
+    inserted.updated_at
+FROM inserted
+LEFT JOIN product_categories ON product_categories.id = inserted.category_id;
 
 -- name: GetProductByID :one
-SELECT *
+SELECT
+    products.id,
+    products.name,
+    products.category_id,
+    product_categories.name AS category_name,
+    products.price_cents,
+    products.active,
+    products.created_at,
+    products.updated_at
 FROM products
-WHERE id = $1;
+LEFT JOIN product_categories ON product_categories.id = products.category_id
+WHERE products.id = $1;
 
 -- name: ListProducts :many
-SELECT *
+SELECT
+    products.id,
+    products.name,
+    products.category_id,
+    product_categories.name AS category_name,
+    products.price_cents,
+    products.active,
+    products.created_at,
+    products.updated_at
 FROM products
+LEFT JOIN product_categories ON product_categories.id = products.category_id
 WHERE sqlc.narg('search')::text IS NULL
-   OR name ILIKE '%' || sqlc.narg('search')::text || '%'
-   OR category ILIKE '%' || sqlc.narg('search')::text || '%'
-ORDER BY active DESC, category ASC NULLS LAST, name ASC;
+   OR products.name ILIKE '%' || sqlc.narg('search')::text || '%'
+   OR product_categories.name ILIKE '%' || sqlc.narg('search')::text || '%'
+ORDER BY products.active DESC, product_categories.name ASC NULLS LAST, products.name ASC;
 
 -- name: ListActiveProducts :many
-SELECT *
+SELECT
+    products.id,
+    products.name,
+    products.category_id,
+    product_categories.name AS category_name,
+    products.price_cents,
+    products.active,
+    products.created_at,
+    products.updated_at
 FROM products
-WHERE active = true
-ORDER BY category ASC NULLS LAST, name ASC;
+LEFT JOIN product_categories ON product_categories.id = products.category_id
+WHERE products.active = true
+ORDER BY product_categories.name ASC NULLS LAST, products.name ASC;
 
 -- name: UpdateProduct :one
-UPDATE products
-SET
-    name = $2,
-    category = $3,
-    price_cents = $4,
-    active = $5,
-    updated_at = now()
-WHERE id = $1
-RETURNING *;
-
+WITH updated AS (
+    UPDATE products
+    SET
+        name = $2,
+        category_id = sqlc.narg('category_id')::uuid,
+        price_cents = $3,
+        active = $4,
+        updated_at = now()
+    WHERE products.id = $1
+    RETURNING *
+)
+SELECT
+    updated.id,
+    updated.name,
+    updated.category_id,
+    product_categories.name AS category_name,
+    updated.price_cents,
+    updated.active,
+    updated.created_at,
+    updated.updated_at
+FROM updated
+LEFT JOIN product_categories ON product_categories.id = updated.category_id;

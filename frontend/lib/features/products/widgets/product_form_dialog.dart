@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/shared/app_snackbar.dart';
 import '../../../core/utils/money.dart';
+import '../../../models/product_category_model.dart';
 import '../../../models/product_model.dart';
 import '../products_provider.dart';
 
-class ProductFormDialog extends StatefulWidget {
+class ProductFormDialog extends ConsumerStatefulWidget {
   const ProductFormDialog({
     this.product,
     super.key,
@@ -13,15 +16,15 @@ class ProductFormDialog extends StatefulWidget {
   final ProductModel? product;
 
   @override
-  State<ProductFormDialog> createState() => _ProductFormDialogState();
+  ConsumerState<ProductFormDialog> createState() => _ProductFormDialogState();
 }
 
-class _ProductFormDialogState extends State<ProductFormDialog> {
+class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _categoryController = TextEditingController();
   final _priceController = TextEditingController();
 
+  String? _categoryId;
   bool _active = true;
 
   @override
@@ -34,7 +37,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     }
 
     _nameController.text = product.name;
-    _categoryController.text = product.category ?? '';
+    _categoryId = product.category?.id;
     _priceController.text = formatCents(product.priceCents).replaceAll('R\$ ', '');
     _active = product.active;
   }
@@ -42,7 +45,6 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   @override
   void dispose() {
     _nameController.dispose();
-    _categoryController.dispose();
     _priceController.dispose();
     super.dispose();
   }
@@ -50,6 +52,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.product != null;
+    final productsState = ref.watch(productsProvider);
 
     return AlertDialog(
       title: Text(isEditing ? 'Editar produto' : 'Novo produto'),
@@ -76,12 +79,39 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _categoryController,
-                textInputAction: TextInputAction.next,
+              DropdownButtonFormField<String>(
+                value: _categoryId ?? '',
+                isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Categoria',
                   prefixIcon: Icon(Icons.category_outlined),
+                ),
+                items: [
+                  const DropdownMenuItem(
+                    value: '',
+                    child: Text('Sem categoria'),
+                  ),
+                  ...productsState.categories.map((category) {
+                    return DropdownMenuItem(
+                      value: category.id,
+                      child: Text(category.name),
+                    );
+                  }),
+                ],
+                onChanged: productsState.isLoadingCategories
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _categoryId = value == '' ? null : value;
+                        });
+                      },
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: productsState.isSaving ? null : _createCategory,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Criar categoria'),
                 ),
               ),
               const SizedBox(height: 16),
@@ -140,15 +170,114 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
       return;
     }
 
-    final category = _categoryController.text.trim();
-
     Navigator.of(context).pop(
       ProductFormInput(
         name: _nameController.text.trim(),
-        category: category.isEmpty ? null : category,
+        categoryId: _categoryId,
         priceCents: parseCents(_priceController.text)!,
         active: _active,
       ),
     );
+  }
+
+  Future<void> _createCategory() async {
+    final category = await showDialog<ProductCategoryModel>(
+      context: context,
+      builder: (context) => const _CreateCategoryDialog(),
+    );
+
+    if (category == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _categoryId = category.id;
+    });
+
+    AppSnackBar.showSuccess('Categoria criada.', context: context);
+  }
+}
+
+class _CreateCategoryDialog extends ConsumerStatefulWidget {
+  const _CreateCategoryDialog();
+
+  @override
+  ConsumerState<_CreateCategoryDialog> createState() =>
+      _CreateCategoryDialogState();
+}
+
+class _CreateCategoryDialogState extends ConsumerState<_CreateCategoryDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(productsProvider);
+
+    return AlertDialog(
+      title: const Text('Criar categoria'),
+      content: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: _nameController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Nome da categoria',
+            prefixIcon: Icon(Icons.category_outlined),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Informe o nome.';
+            }
+
+            return null;
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: state.isSaving ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: state.isSaving ? null : _submit,
+          child: state.isSaving
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Criar'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final category = await ref
+        .read(productsProvider.notifier)
+        .createCategory(_nameController.text);
+
+    if (!mounted) {
+      return;
+    }
+
+    if (category == null) {
+      final error =
+          ref.read(productsProvider).error ?? 'Nao foi possivel criar categoria.';
+      AppSnackBar.showError(error, context: context);
+      return;
+    }
+
+    Navigator.of(context).pop(category);
   }
 }

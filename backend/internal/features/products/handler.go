@@ -22,6 +22,10 @@ func (h *Handler) Routes() http.Handler {
 	router.Get("/", h.list)
 	router.Post("/", h.create)
 	router.Get("/active", h.listActive)
+	router.Get("/categories", h.listCategories)
+	router.Post("/categories", h.createCategory)
+	router.Get("/categories/active", h.listActiveCategories)
+	router.Put("/categories/{categoryID}", h.updateCategory)
 	router.Get("/{productID}", h.get)
 	router.Put("/{productID}", h.update)
 

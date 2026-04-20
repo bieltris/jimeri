@@ -12,31 +12,56 @@ import (
 )
 
 const createProduct = `-- name: CreateProduct :one
-INSERT INTO products (
-    name,
-    category,
-    price_cents
-) VALUES (
-    $1,
-    $2,
-    $3
+WITH inserted AS (
+    INSERT INTO products (
+        name,
+        category_id,
+        price_cents
+    ) VALUES (
+        $1,
+        $3::uuid,
+        $2
+    )
+    RETURNING id, name, price_cents, active, created_at, updated_at, category_id
 )
-RETURNING id, name, category, price_cents, active, created_at, updated_at
+SELECT
+    inserted.id,
+    inserted.name,
+    inserted.category_id,
+    product_categories.name AS category_name,
+    inserted.price_cents,
+    inserted.active,
+    inserted.created_at,
+    inserted.updated_at
+FROM inserted
+LEFT JOIN product_categories ON product_categories.id = inserted.category_id
 `
 
 type CreateProductParams struct {
 	Name       string      `json:"name"`
-	Category   pgtype.Text `json:"category"`
 	PriceCents int64       `json:"price_cents"`
+	CategoryID pgtype.UUID `json:"category_id"`
 }
 
-func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
-	row := q.db.QueryRow(ctx, createProduct, arg.Name, arg.Category, arg.PriceCents)
-	var i Product
+type CreateProductRow struct {
+	ID           pgtype.UUID        `json:"id"`
+	Name         string             `json:"name"`
+	CategoryID   pgtype.UUID        `json:"category_id"`
+	CategoryName pgtype.Text        `json:"category_name"`
+	PriceCents   int64              `json:"price_cents"`
+	Active       bool               `json:"active"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (CreateProductRow, error) {
+	row := q.db.QueryRow(ctx, createProduct, arg.Name, arg.PriceCents, arg.CategoryID)
+	var i CreateProductRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.Category,
+		&i.CategoryID,
+		&i.CategoryName,
 		&i.PriceCents,
 		&i.Active,
 		&i.CreatedAt,
@@ -46,18 +71,39 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 }
 
 const getProductByID = `-- name: GetProductByID :one
-SELECT id, name, category, price_cents, active, created_at, updated_at
+SELECT
+    products.id,
+    products.name,
+    products.category_id,
+    product_categories.name AS category_name,
+    products.price_cents,
+    products.active,
+    products.created_at,
+    products.updated_at
 FROM products
-WHERE id = $1
+LEFT JOIN product_categories ON product_categories.id = products.category_id
+WHERE products.id = $1
 `
 
-func (q *Queries) GetProductByID(ctx context.Context, id pgtype.UUID) (Product, error) {
+type GetProductByIDRow struct {
+	ID           pgtype.UUID        `json:"id"`
+	Name         string             `json:"name"`
+	CategoryID   pgtype.UUID        `json:"category_id"`
+	CategoryName pgtype.Text        `json:"category_name"`
+	PriceCents   int64              `json:"price_cents"`
+	Active       bool               `json:"active"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetProductByID(ctx context.Context, id pgtype.UUID) (GetProductByIDRow, error) {
 	row := q.db.QueryRow(ctx, getProductByID, id)
-	var i Product
+	var i GetProductByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.Category,
+		&i.CategoryID,
+		&i.CategoryName,
 		&i.PriceCents,
 		&i.Active,
 		&i.CreatedAt,
@@ -67,25 +113,46 @@ func (q *Queries) GetProductByID(ctx context.Context, id pgtype.UUID) (Product, 
 }
 
 const listActiveProducts = `-- name: ListActiveProducts :many
-SELECT id, name, category, price_cents, active, created_at, updated_at
+SELECT
+    products.id,
+    products.name,
+    products.category_id,
+    product_categories.name AS category_name,
+    products.price_cents,
+    products.active,
+    products.created_at,
+    products.updated_at
 FROM products
-WHERE active = true
-ORDER BY category ASC NULLS LAST, name ASC
+LEFT JOIN product_categories ON product_categories.id = products.category_id
+WHERE products.active = true
+ORDER BY product_categories.name ASC NULLS LAST, products.name ASC
 `
 
-func (q *Queries) ListActiveProducts(ctx context.Context) ([]Product, error) {
+type ListActiveProductsRow struct {
+	ID           pgtype.UUID        `json:"id"`
+	Name         string             `json:"name"`
+	CategoryID   pgtype.UUID        `json:"category_id"`
+	CategoryName pgtype.Text        `json:"category_name"`
+	PriceCents   int64              `json:"price_cents"`
+	Active       bool               `json:"active"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) ListActiveProducts(ctx context.Context) ([]ListActiveProductsRow, error) {
 	rows, err := q.db.Query(ctx, listActiveProducts)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Product
+	var items []ListActiveProductsRow
 	for rows.Next() {
-		var i Product
+		var i ListActiveProductsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
-			&i.Category,
+			&i.CategoryID,
+			&i.CategoryName,
 			&i.PriceCents,
 			&i.Active,
 			&i.CreatedAt,
@@ -102,27 +169,48 @@ func (q *Queries) ListActiveProducts(ctx context.Context) ([]Product, error) {
 }
 
 const listProducts = `-- name: ListProducts :many
-SELECT id, name, category, price_cents, active, created_at, updated_at
+SELECT
+    products.id,
+    products.name,
+    products.category_id,
+    product_categories.name AS category_name,
+    products.price_cents,
+    products.active,
+    products.created_at,
+    products.updated_at
 FROM products
+LEFT JOIN product_categories ON product_categories.id = products.category_id
 WHERE $1::text IS NULL
-   OR name ILIKE '%' || $1::text || '%'
-   OR category ILIKE '%' || $1::text || '%'
-ORDER BY active DESC, category ASC NULLS LAST, name ASC
+   OR products.name ILIKE '%' || $1::text || '%'
+   OR product_categories.name ILIKE '%' || $1::text || '%'
+ORDER BY products.active DESC, product_categories.name ASC NULLS LAST, products.name ASC
 `
 
-func (q *Queries) ListProducts(ctx context.Context, search pgtype.Text) ([]Product, error) {
+type ListProductsRow struct {
+	ID           pgtype.UUID        `json:"id"`
+	Name         string             `json:"name"`
+	CategoryID   pgtype.UUID        `json:"category_id"`
+	CategoryName pgtype.Text        `json:"category_name"`
+	PriceCents   int64              `json:"price_cents"`
+	Active       bool               `json:"active"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) ListProducts(ctx context.Context, search pgtype.Text) ([]ListProductsRow, error) {
 	rows, err := q.db.Query(ctx, listProducts, search)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Product
+	var items []ListProductsRow
 	for rows.Next() {
-		var i Product
+		var i ListProductsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
-			&i.Category,
+			&i.CategoryID,
+			&i.CategoryName,
 			&i.PriceCents,
 			&i.Active,
 			&i.CreatedAt,
@@ -139,38 +227,63 @@ func (q *Queries) ListProducts(ctx context.Context, search pgtype.Text) ([]Produ
 }
 
 const updateProduct = `-- name: UpdateProduct :one
-UPDATE products
-SET
-    name = $2,
-    category = $3,
-    price_cents = $4,
-    active = $5,
-    updated_at = now()
-WHERE id = $1
-RETURNING id, name, category, price_cents, active, created_at, updated_at
+WITH updated AS (
+    UPDATE products
+    SET
+        name = $2,
+        category_id = $5::uuid,
+        price_cents = $3,
+        active = $4,
+        updated_at = now()
+    WHERE products.id = $1
+    RETURNING id, name, price_cents, active, created_at, updated_at, category_id
+)
+SELECT
+    updated.id,
+    updated.name,
+    updated.category_id,
+    product_categories.name AS category_name,
+    updated.price_cents,
+    updated.active,
+    updated.created_at,
+    updated.updated_at
+FROM updated
+LEFT JOIN product_categories ON product_categories.id = updated.category_id
 `
 
 type UpdateProductParams struct {
 	ID         pgtype.UUID `json:"id"`
 	Name       string      `json:"name"`
-	Category   pgtype.Text `json:"category"`
 	PriceCents int64       `json:"price_cents"`
 	Active     bool        `json:"active"`
+	CategoryID pgtype.UUID `json:"category_id"`
 }
 
-func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
+type UpdateProductRow struct {
+	ID           pgtype.UUID        `json:"id"`
+	Name         string             `json:"name"`
+	CategoryID   pgtype.UUID        `json:"category_id"`
+	CategoryName pgtype.Text        `json:"category_name"`
+	PriceCents   int64              `json:"price_cents"`
+	Active       bool               `json:"active"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (UpdateProductRow, error) {
 	row := q.db.QueryRow(ctx, updateProduct,
 		arg.ID,
 		arg.Name,
-		arg.Category,
 		arg.PriceCents,
 		arg.Active,
+		arg.CategoryID,
 	)
-	var i Product
+	var i UpdateProductRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.Category,
+		&i.CategoryID,
+		&i.CategoryName,
 		&i.PriceCents,
 		&i.Active,
 		&i.CreatedAt,

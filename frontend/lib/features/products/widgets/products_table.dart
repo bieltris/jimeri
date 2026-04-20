@@ -41,7 +41,7 @@ class ProductsTable extends StatelessWidget {
               return DataRow(
                 cells: [
                   DataCell(Text(product.name)),
-                  DataCell(Text(product.category ?? '-')),
+                  DataCell(Text(product.category?.name ?? '-')),
                   DataCell(Text(formatCents(product.priceCents))),
                   DataCell(ProductStatusChip(active: product.active)),
                   DataCell(

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api/api_exception.dart';
+import '../../models/product_category_model.dart';
 import '../../models/product_model.dart';
 import '../../services/products_service.dart';
 
@@ -23,17 +24,21 @@ enum ProductsFilter {
 class ProductsState {
   const ProductsState({
     this.products = const [],
+    this.categories = const [],
     this.search = '',
     this.filter = ProductsFilter.all,
     this.isLoading = false,
+    this.isLoadingCategories = false,
     this.isSaving = false,
     this.error,
   });
 
   final List<ProductModel> products;
+  final List<ProductCategoryModel> categories;
   final String search;
   final ProductsFilter filter;
   final bool isLoading;
+  final bool isLoadingCategories;
   final bool isSaving;
   final String? error;
 
@@ -49,18 +54,22 @@ class ProductsState {
 
   ProductsState copyWith({
     List<ProductModel>? products,
+    List<ProductCategoryModel>? categories,
     String? search,
     ProductsFilter? filter,
     bool? isLoading,
+    bool? isLoadingCategories,
     bool? isSaving,
     String? error,
     bool clearError = false,
   }) {
     return ProductsState(
       products: products ?? this.products,
+      categories: categories ?? this.categories,
       search: search ?? this.search,
       filter: filter ?? this.filter,
       isLoading: isLoading ?? this.isLoading,
+      isLoadingCategories: isLoadingCategories ?? this.isLoadingCategories,
       isSaving: isSaving ?? this.isSaving,
       error: clearError ? null : error ?? this.error,
     );
@@ -72,11 +81,11 @@ class ProductFormInput {
     required this.name,
     required this.priceCents,
     required this.active,
-    this.category,
+    this.categoryId,
   });
 
   final String name;
-  final String? category;
+  final String? categoryId;
   final int priceCents;
   final bool active;
 }
@@ -90,9 +99,33 @@ class ProductsController extends Notifier<ProductsState> {
       _searchDebounce?.cancel();
     });
 
-    Future.microtask(loadProducts);
+    Future.microtask(() async {
+      await Future.wait([
+        loadProducts(),
+        loadCategories(),
+      ]);
+    });
 
     return const ProductsState(isLoading: true);
+  }
+
+  Future<void> loadCategories() async {
+    state = state.copyWith(isLoadingCategories: true, clearError: true);
+
+    try {
+      final categories = await ref.read(productsServiceProvider).listCategories();
+
+      state = state.copyWith(
+        categories: categories,
+        isLoadingCategories: false,
+        clearError: true,
+      );
+    } on ApiException catch (error) {
+      state = state.copyWith(
+        isLoadingCategories: false,
+        error: error.message,
+      );
+    }
   }
 
   Future<void> loadProducts() async {
@@ -133,7 +166,7 @@ class ProductsController extends Notifier<ProductsState> {
     try {
       final product = await ref.read(productsServiceProvider).create(
             name: input.name,
-            category: input.category,
+            categoryId: input.categoryId,
             priceCents: input.priceCents,
           );
 
@@ -161,7 +194,7 @@ class ProductsController extends Notifier<ProductsState> {
       final updated = await ref.read(productsServiceProvider).update(
             id: product.id,
             name: input.name,
-            category: input.category,
+            categoryId: input.categoryId,
             priceCents: input.priceCents,
             active: input.active,
           );
@@ -203,7 +236,7 @@ class ProductsController extends Notifier<ProductsState> {
       final updated = await ref.read(productsServiceProvider).update(
             id: product.id,
             name: product.name,
-            category: product.category,
+            categoryId: product.category?.id,
             priceCents: product.priceCents,
             active: !product.active,
           );
@@ -229,5 +262,33 @@ class ProductsController extends Notifier<ProductsState> {
 
       return current;
     }).toList();
+  }
+
+  Future<ProductCategoryModel?> createCategory(String name) async {
+    final normalizedName = name.trim();
+    if (normalizedName.isEmpty) {
+      state = state.copyWith(error: 'Informe o nome da categoria.');
+      return null;
+    }
+
+    state = state.copyWith(isSaving: true, clearError: true);
+
+    try {
+      final category = await ref.read(productsServiceProvider).createCategory(
+            name: normalizedName,
+          );
+
+      state = state.copyWith(
+        categories: [category, ...state.categories],
+        isSaving: false,
+        clearError: true,
+      );
+
+      return category;
+    } on ApiException catch (error) {
+      state = state.copyWith(isSaving: false, error: error.message);
+
+      return null;
+    }
   }
 }

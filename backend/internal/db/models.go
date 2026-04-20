@@ -62,11 +62,19 @@ type Payment struct {
 type Product struct {
 	ID         pgtype.UUID        `json:"id"`
 	Name       string             `json:"name"`
-	Category   pgtype.Text        `json:"category"`
 	PriceCents int64              `json:"price_cents"`
 	Active     bool               `json:"active"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	CategoryID pgtype.UUID        `json:"category_id"`
+}
+
+type ProductCategory struct {
+	ID        pgtype.UUID        `json:"id"`
+	Name      string             `json:"name"`
+	Active    bool               `json:"active"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 type RefreshToken struct {

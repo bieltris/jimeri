@@ -1,3 +1,5 @@
+import 'product_category_model.dart';
+
 class ProductModel {
   const ProductModel({
     required this.id,
@@ -11,7 +13,7 @@ class ProductModel {
 
   final String id;
   final String name;
-  final String? category;
+  final ProductCategoryModel? category;
   final int priceCents;
   final bool active;
   final String createdAt;
@@ -23,7 +25,9 @@ class ProductModel {
     return ProductModel(
       id: data['id'] as String,
       name: data['name'] as String,
-      category: data['category'] as String?,
+      category: data['category'] == null
+          ? null
+          : ProductCategoryModel.fromJson(data['category']),
       priceCents: data['priceCents'] as int,
       active: data['active'] as bool,
       createdAt: data['createdAt'] as String,

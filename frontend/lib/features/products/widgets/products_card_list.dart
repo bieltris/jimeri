@@ -49,7 +49,7 @@ class ProductsCardList extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(product.category ?? 'Sem categoria'),
+              Text(product.category?.name ?? 'Sem categoria'),
               const SizedBox(height: 8),
               Text(
                 formatCents(product.priceCents),

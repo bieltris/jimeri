@@ -25,4 +25,17 @@ class ApiRoutes {
   }
 
   static Uri product(String id) => Uri.parse('$baseUrl/products/$id');
+
+  static Uri productCategories({String? search}) {
+    return Uri.parse('$baseUrl/products/categories').replace(
+      queryParameters: search == null || search.isEmpty
+          ? null
+          : {
+              'search': search,
+            },
+    );
+  }
+
+  static Uri productCategory(String id) =>
+      Uri.parse('$baseUrl/products/categories/$id');
 }
