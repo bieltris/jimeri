@@ -5,7 +5,7 @@ import 'app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  static const String fontFamily = 'Inter';
+  static const String fontFamily = 'Ubuntu';
   static const List<String> fontFallback = ['Segoe UI', 'Arial', 'sans-serif'];
 
   static ThemeData get lightTheme {
