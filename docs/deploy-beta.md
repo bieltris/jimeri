@@ -5,7 +5,7 @@ Guia curto para subir a primeira versao funcional em producao.
 Stack da beta:
 
 - Banco: Neon Postgres
-- API: Fly.io
+- API: Koyeb com Dockerfile
 - Frontend: Cloudflare Pages, com upload direto do build
 
 ## 1. Criar Banco No Neon
@@ -43,68 +43,80 @@ go run ./cmd/seed-admin
 
 Depois da beta estar no ar, troque a senha por uma senha real.
 
-## 4. Criar App No Fly.io
+## 4. Criar API No Koyeb
 
-Instale e autentique no Fly:
+No painel do Koyeb:
 
-```powershell
-fly auth login
+1. Crie um App chamado `jimeri-api`.
+2. Escolha deploy por GitHub.
+3. Selecione o repositorio `bieltris/jimeri`.
+4. Escolha a branch `main`.
+5. Em Builder, escolha `Dockerfile`.
+6. Em Work directory, coloque:
+
+```text
+backend
 ```
 
-Entre na pasta `backend` e crie o app sem deploy automatico:
+7. Em Dockerfile location, deixe:
 
-```powershell
-cd backend
-fly launch --no-deploy
+```text
+Dockerfile
 ```
 
-Se o nome `jimeri-api` nao estiver disponivel, escolha outro nome e atualize `app` no `backend/fly.toml`.
+8. Em Port, use:
 
-## 5. Configurar Secrets Da API
-
-Ainda na pasta `backend`:
-
-```powershell
-fly secrets set DATABASE_URL="postgresql://USER:PASSWORD@HOST/jimeri?sslmode=require"
-fly secrets set ACCESS_TOKEN_SECRET="gere-um-secret-grande-aqui"
-fly secrets set CORS_ALLOWED_ORIGINS="https://SEU-PROJETO.pages.dev"
+```text
+8080
 ```
 
-No primeiro deploy, se voce ainda nao souber a URL do Cloudflare Pages, use temporariamente:
+## 5. Configurar Variaveis Da API No Koyeb
 
-```powershell
-fly secrets set CORS_ALLOWED_ORIGINS="http://localhost:3000"
+No service da API, configure as variaveis:
+
+```text
+APP_ENV=production
+HTTP_ADDR=:8080
+DATABASE_URL=postgresql://USER:PASSWORD@HOST/jimeri?sslmode=require
+ACCESS_TOKEN_SECRET=gere-um-secret-grande-aqui
+APP_TIMEZONE=America/Sao_Paulo
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+REFRESH_COOKIE_NAME=jimeri_refresh_token
+REFRESH_COOKIE_SECURE=true
 ```
 
-Depois de criar o frontend no Cloudflare, atualize para a URL real.
+No primeiro deploy, se voce ainda nao souber a URL do Cloudflare Pages, use temporariamente `http://localhost:3000` no CORS.
 
-## 6. Subir API No Fly
+Depois de criar o frontend no Cloudflare, atualize `CORS_ALLOWED_ORIGINS` para a URL real do Cloudflare Pages.
 
-Na pasta `backend`:
+Para gerar um secret localmente:
 
 ```powershell
-fly deploy
+[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }))
+```
+
+## 6. Subir API No Koyeb
+
+Clique para criar/deployar o service.
+
+Quando terminar, o Koyeb vai fornecer uma URL parecida com:
+
+```text
+https://jimeri-api-SEU-USUARIO.koyeb.app
 ```
 
 Teste:
 
-```powershell
-fly status
-fly logs
-```
-
-Health check:
-
 ```text
-https://NOME-DO-APP.fly.dev/api/health
+https://jimeri-api-SEU-USUARIO.koyeb.app/api/health
 ```
 
 ## 7. Buildar Frontend Para Producao
 
-Na pasta `frontend`, substitua a URL pelo app real do Fly:
+Na pasta `frontend`, substitua a URL pela URL real do Koyeb:
 
 ```powershell
-flutter build web --release --dart-define=API_BASE_URL=https://NOME-DO-APP.fly.dev/api
+flutter build web --release --dart-define=API_BASE_URL=https://jimeri-api-SEU-USUARIO.koyeb.app/api
 ```
 
 O build fica em:
@@ -115,7 +127,7 @@ frontend/build/web
 
 ## 8. Subir Frontend No Cloudflare Pages
 
-Instale ou rode Wrangler com `npx`:
+Rode login se ainda nao fez:
 
 ```powershell
 npx wrangler login
@@ -135,12 +147,13 @@ https://jimeri.pages.dev
 
 ## 9. Atualizar CORS Com A URL Real
 
-Volte para a pasta `backend`:
+Volte no Koyeb e altere:
 
-```powershell
-fly secrets set CORS_ALLOWED_ORIGINS="https://jimeri.pages.dev"
-fly deploy
+```text
+CORS_ALLOWED_ORIGINS=https://jimeri.pages.dev
 ```
+
+Depois redeploye a API.
 
 ## 10. Teste Final Da Beta
 
@@ -154,15 +167,11 @@ Teste em producao:
 - Registrar pagamento
 - Cobrar pelo WhatsApp
 
-Se algum passo falhar, olhe primeiro:
-
-```powershell
-fly logs
-```
+Se algum passo falhar, olhe primeiro os logs do service no Koyeb.
 
 ## Observacoes
 
 - Nao commite secrets reais.
 - O arquivo `backend/.env.production.example` e apenas modelo.
 - O refresh token usa cookie seguro em producao, entao precisa de HTTPS.
-- Cloudflare Pages e Fly ja entregam HTTPS por padrao.
+- Cloudflare Pages e Koyeb entregam HTTPS por padrao.
