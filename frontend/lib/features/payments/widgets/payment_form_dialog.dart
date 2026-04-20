@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/shared/responsive_dialog.dart';
 import '../../../core/utils/money.dart';
 import '../../../models/payment_model.dart';
 import '../payments_provider.dart';
@@ -27,67 +28,64 @@ class _PaymentFormDialogState extends State<PaymentFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    return ResponsiveDialog(
       title: const Text('Registrar pagamento'),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Valor',
-                  prefixText: 'R\$ ',
-                  prefixIcon: Icon(Icons.payments_outlined),
-                ),
-                validator: (value) {
-                  final cents = parseCents(value ?? '');
-                  if (cents == null || cents <= 0) {
-                    return 'Informe um valor valido.';
-                  }
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _amountController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Valor',
+                prefixText: 'R\$ ',
+                prefixIcon: Icon(Icons.payments_outlined),
+              ),
+              validator: (value) {
+                final cents = parseCents(value ?? '');
+                if (cents == null || cents <= 0) {
+                  return 'Informe um valor valido.';
+                }
 
-                  return null;
-                },
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<PaymentMethod>(
+              value: _method,
+              decoration: const InputDecoration(
+                labelText: 'Metodo',
+                prefixIcon: Icon(Icons.account_balance_wallet_outlined),
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<PaymentMethod>(
-                value: _method,
-                decoration: const InputDecoration(
-                  labelText: 'Metodo',
-                  prefixIcon: Icon(Icons.account_balance_wallet_outlined),
-                ),
-                items: PaymentMethod.values.map((method) {
-                  return DropdownMenuItem(
-                    value: method,
-                    child: Text(method.label),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value == null) {
-                    return;
-                  }
+              items: PaymentMethod.values.map((method) {
+                return DropdownMenuItem(
+                  value: method,
+                  child: Text(method.label),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
 
-                  setState(() {
-                    _method = value;
-                  });
-                },
+                setState(() {
+                  _method = value;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _noteController,
+              minLines: 2,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Observacao',
+                prefixIcon: Icon(Icons.notes_outlined),
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _noteController,
-                minLines: 2,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Observacao',
-                  prefixIcon: Icon(Icons.notes_outlined),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       actions: [

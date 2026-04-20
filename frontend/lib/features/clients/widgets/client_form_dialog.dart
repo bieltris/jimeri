@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/shared/responsive_dialog.dart';
 import '../../../dtos/client_with_balance_dto.dart';
 import '../clients_provider.dart';
 
@@ -53,71 +54,69 @@ class _ClientFormDialogState extends State<ClientFormDialog> {
   Widget build(BuildContext context) {
     final isEditing = widget.client != null;
 
-    return AlertDialog(
+    return ResponsiveDialog(
       title: Text(isEditing ? 'Editar cliente' : 'Novo cliente'),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nome',
-                  prefixIcon: Icon(Icons.person_outline),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Informe o nome.';
-                  }
+      maxWidth: 460,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Nome',
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Informe o nome.';
+                }
 
-                  return null;
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _responsibleNameController,
+              decoration: const InputDecoration(
+                labelText: 'Responsavel',
+                prefixIcon: Icon(Icons.supervisor_account_outlined),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _whatsappController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'WhatsApp do responsavel',
+                prefixIcon: Icon(Icons.chat_outlined),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _noteController,
+              minLines: 2,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Observacao',
+                prefixIcon: Icon(Icons.notes_outlined),
+              ),
+            ),
+            if (isEditing) ...[
+              const SizedBox(height: 8),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Cliente ativo no cadastro'),
+                value: _active,
+                onChanged: (value) {
+                  setState(() {
+                    _active = value;
+                  });
                 },
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _responsibleNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Responsavel',
-                  prefixIcon: Icon(Icons.supervisor_account_outlined),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _whatsappController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'WhatsApp do responsavel',
-                  prefixIcon: Icon(Icons.chat_outlined),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _noteController,
-                minLines: 2,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Observacao',
-                  prefixIcon: Icon(Icons.notes_outlined),
-                ),
-              ),
-              if (isEditing) ...[
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Cliente ativo no cadastro'),
-                  value: _active,
-                  onChanged: (value) {
-                    setState(() {
-                      _active = value;
-                    });
-                  },
-                ),
-              ],
             ],
-          ),
+          ],
         ),
       ),
       actions: [

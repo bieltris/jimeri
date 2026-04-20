@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/shared/app_snackbar.dart';
+import '../../../core/shared/responsive_dialog.dart';
 import '../../../core/utils/money.dart';
 import '../../../models/product_category_model.dart';
 import '../../../models/product_model.dart';
@@ -54,102 +55,99 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     final isEditing = widget.product != null;
     final productsState = ref.watch(productsProvider);
 
-    return AlertDialog(
+    return ResponsiveDialog(
       title: Text(isEditing ? 'Editar produto' : 'Novo produto'),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Nome',
-                  prefixIcon: Icon(Icons.inventory_2_outlined),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Informe o nome.';
-                  }
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _nameController,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'Nome',
+                prefixIcon: Icon(Icons.inventory_2_outlined),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Informe o nome.';
+                }
 
-                  return null;
-                },
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _categoryId ?? '',
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Categoria',
+                prefixIcon: Icon(Icons.category_outlined),
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _categoryId ?? '',
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Categoria',
-                  prefixIcon: Icon(Icons.category_outlined),
+              items: [
+                const DropdownMenuItem(
+                  value: '',
+                  child: Text('Sem categoria'),
                 ),
-                items: [
-                  const DropdownMenuItem(
-                    value: '',
-                    child: Text('Sem categoria'),
-                  ),
-                  ...productsState.categories.map((category) {
-                    return DropdownMenuItem(
-                      value: category.id,
-                      child: Text(category.name),
-                    );
-                  }),
-                ],
-                onChanged: productsState.isLoadingCategories
-                    ? null
-                    : (value) {
-                        setState(() {
-                          _categoryId = value == '' ? null : value;
-                        });
-                      },
-              ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: productsState.isSaving ? null : _createCategory,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Criar categoria'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _priceController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                textInputAction: TextInputAction.done,
-                decoration: const InputDecoration(
-                  labelText: 'Preco',
-                  prefixText: 'R\$ ',
-                  prefixIcon: Icon(Icons.attach_money),
-                ),
-                validator: (value) {
-                  final cents = parseCents(value ?? '');
-                  if (cents == null) {
-                    return 'Informe um preco valido.';
-                  }
-
-                  return null;
-                },
-              ),
-              if (isEditing) ...[
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Produto a venda'),
-                  value: _active,
-                  onChanged: (value) {
-                    setState(() {
-                      _active = value;
-                    });
-                  },
-                ),
+                ...productsState.categories.map((category) {
+                  return DropdownMenuItem(
+                    value: category.id,
+                    child: Text(category.name),
+                  );
+                }),
               ],
+              onChanged: productsState.isLoadingCategories
+                  ? null
+                  : (value) {
+                      setState(() {
+                        _categoryId = value == '' ? null : value;
+                      });
+                    },
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: productsState.isSaving ? null : _createCategory,
+                icon: const Icon(Icons.add),
+                label: const Text('Criar categoria'),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _priceController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              textInputAction: TextInputAction.done,
+              decoration: const InputDecoration(
+                labelText: 'Preco',
+                prefixText: 'R\$ ',
+                prefixIcon: Icon(Icons.attach_money),
+              ),
+              validator: (value) {
+                final cents = parseCents(value ?? '');
+                if (cents == null) {
+                  return 'Informe um preco valido.';
+                }
+
+                return null;
+              },
+            ),
+            if (isEditing) ...[
+              const SizedBox(height: 8),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Produto a venda'),
+                value: _active,
+                onChanged: (value) {
+                  setState(() {
+                    _active = value;
+                  });
+                },
+              ),
             ],
-          ),
+          ],
         ),
       ),
       actions: [
@@ -220,9 +218,9 @@ class _CreateCategoryDialogState extends ConsumerState<_CreateCategoryDialog> {
   Widget build(BuildContext context) {
     final state = ref.watch(productsProvider);
 
-    return AlertDialog(
+    return ResponsiveDialog(
       title: const Text('Criar categoria'),
-      content: Form(
+      child: Form(
         key: _formKey,
         child: TextFormField(
           controller: _nameController,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/shared/admin_page.dart';
 import '../../core/shared/app_snackbar.dart';
+import '../../core/shared/responsive_dialog.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/money.dart';
 import '../../models/payment_model.dart';
@@ -133,9 +134,9 @@ class PaymentsScreen extends ConsumerWidget {
 
     return showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => ResponsiveDialog(
         title: const Text('Cancelar pagamento'),
-        content: TextField(
+        child: TextField(
           controller: controller,
           decoration: const InputDecoration(
             labelText: 'Motivo',
