@@ -16,6 +16,7 @@ import (
 )
 
 func main() {
+
 	if err := envfile.Load(".env"); err != nil {
 		log.Fatalf("load .env: %v", err)
 	}

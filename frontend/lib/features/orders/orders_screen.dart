@@ -95,7 +95,7 @@ class _MobileCartOverlayState extends ConsumerState<_MobileCartOverlay> {
           return const SizedBox();
         }
 
-        final height = _expanded ? constraints.maxHeight * 0.85 : 66.0;
+        final height = _expanded ? constraints.maxHeight * 0.70 : 66.0;
 
         return Align(
           alignment: Alignment.bottomCenter,
