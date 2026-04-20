@@ -23,6 +23,7 @@ func NewRouter(pool *pgxpool.Pool, cfg config.Config) http.Handler {
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
+	router.Use(CORS(cfg.CORSAllowedOrigins))
 
 	authHandler := auth.NewHandler(pool, cfg)
 	clientsHandler := clients.NewHandler(pool)

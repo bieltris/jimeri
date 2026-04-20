@@ -244,6 +244,7 @@ Para rodar a API local com auth:
 $env:DATABASE_URL="postgres://postgres:postgres@localhost:5432/jimeri?sslmode=disable"
 $env:ACCESS_TOKEN_SECRET="dev-access-secret"
 $env:APP_TIMEZONE="America/Sao_Paulo"
+$env:CORS_ALLOWED_ORIGINS="http://localhost:3000,http://localhost:8081"
 $env:REFRESH_COOKIE_SECURE="false"
 go run ./cmd/api
 ```
@@ -260,4 +261,24 @@ POST /api/payments
 GET  /api/payments/client/{clientID}
 GET  /api/reports/dashboard
 GET  /api/reports/debts
+```
+
+## Docker Local
+
+Subir banco e API:
+
+```powershell
+docker compose up --build
+```
+
+A API fica em:
+
+```text
+http://localhost:8080
+```
+
+Para rodar apenas o banco local pelo Docker:
+
+```powershell
+docker compose up -d postgres
 ```

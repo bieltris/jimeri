@@ -24,6 +24,7 @@ Stack principal:
 - golang-migrate para migrations
 - JWT para access token
 - refresh token opaco em cookie HttpOnly
+- CORS com credentials para Flutter Web
 
 ## Estrutura
 
@@ -51,6 +52,31 @@ backend/
     respond/
     uuidutil/
 ```
+
+## Configuracao
+
+Variaveis principais:
+
+```text
+APP_ENV
+HTTP_ADDR
+DATABASE_URL
+ACCESS_TOKEN_SECRET
+APP_TIMEZONE
+CORS_ALLOWED_ORIGINS
+REFRESH_COOKIE_NAME
+REFRESH_COOKIE_SECURE
+```
+
+`CORS_ALLOWED_ORIGINS` deve conter as origens do frontend separadas por virgula.
+
+Exemplo:
+
+```text
+http://localhost:3000,http://localhost:8081
+```
+
+Como o refresh token usa cookie HttpOnly, o CORS precisa permitir credentials.
 
 ## Executaveis
 
@@ -91,6 +117,19 @@ Exemplo conceitual:
 ```
 
 Rotas administrativas ficam dentro de um grupo protegido por autenticação.
+
+## Docker
+
+O backend tem `Dockerfile` proprio em:
+
+```text
+backend/Dockerfile
+```
+
+O `docker-compose.yml` da raiz sobe:
+
+- API Go;
+- PostgreSQL local.
 
 ## Features
 
