@@ -25,7 +25,7 @@ class ClientsState {
   const ClientsState({
     this.clients = const [],
     this.search = '',
-    this.filter = ClientsFilter.all,
+    this.filter = ClientsFilter.active,
     this.isLoading = false,
     this.isSaving = false,
     this.error,

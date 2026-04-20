@@ -22,7 +22,7 @@ class ProductStatusChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        active ? 'Ativo' : 'Inativo',
+        active ? 'Item ativado' : 'Item desativado',
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: foreground,
               fontWeight: FontWeight.w700,

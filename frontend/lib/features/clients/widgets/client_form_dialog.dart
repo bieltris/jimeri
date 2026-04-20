@@ -107,7 +107,7 @@ class _ClientFormDialogState extends State<ClientFormDialog> {
                 const SizedBox(height: 8),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Cliente ativo'),
+                  title: const Text('Cliente ativo no cadastro'),
                   value: _active,
                   onChanged: (value) {
                     setState(() {

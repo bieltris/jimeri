@@ -26,7 +26,7 @@ class ProductsState {
     this.products = const [],
     this.categories = const [],
     this.search = '',
-    this.filter = ProductsFilter.all,
+    this.filter = ProductsFilter.active,
     this.isLoading = false,
     this.isLoadingCategories = false,
     this.isSaving = false,

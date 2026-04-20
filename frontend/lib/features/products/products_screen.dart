@@ -119,7 +119,7 @@ class ProductsScreen extends ConsumerWidget {
     }
 
     AppSnackBar.showSuccess(
-      product.active ? 'Produto desativado.' : 'Produto ativado.',
+      product.active ? 'Produto removido da venda.' : 'Produto voltou a venda.',
       context: context,
     );
   }
@@ -163,11 +163,11 @@ class _ProductsFilters extends ConsumerWidget {
                 ),
                 ButtonSegment(
                   value: ProductsFilter.active,
-                  label: Text('Ativos'),
+                  label: Text('A venda'),
                 ),
                 ButtonSegment(
                   value: ProductsFilter.inactive,
-                  label: Text('Inativos'),
+                  label: Text('Fora da venda'),
                 ),
               ],
               selected: {state.filter},

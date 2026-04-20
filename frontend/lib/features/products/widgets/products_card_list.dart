@@ -69,7 +69,9 @@ class ProductsCardList extends StatelessWidget {
                   ),
                   TextButton(
                     onPressed: () => onToggleStatus(product),
-                    child: Text(product.active ? 'Desativar' : 'Ativar'),
+                    child: Text(
+                      product.active ? 'Remover da venda' : 'Voltar a vender',
+                    ),
                   ),
                 ],
               ),

@@ -266,11 +266,24 @@ class _ClientsList extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      client.name,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            client.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
                           ),
+                        ),
+                        const SizedBox(width: 8),
+                        _ClientStatusBadge(active: client.active),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(client.responsibleName ?? 'Sem responsavel informado'),
@@ -318,6 +331,35 @@ class _ClientsList extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+class _ClientStatusBadge extends StatelessWidget {
+  const _ClientStatusBadge({
+    required this.active,
+  });
+
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final background = active ? AppColors.accentLight : AppColors.neutral200;
+    final foreground = active ? AppColors.accentDark : AppColors.neutral600;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        active ? 'Cliente ativo' : 'Cliente inativo',
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: foreground,
+              fontWeight: FontWeight.w700,
+            ),
+      ),
     );
   }
 }

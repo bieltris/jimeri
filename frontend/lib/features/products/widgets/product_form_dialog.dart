@@ -139,7 +139,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                 const SizedBox(height: 8),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Produto ativo'),
+                  title: const Text('Produto a venda'),
                   value: _active,
                   onChanged: (value) {
                     setState(() {
