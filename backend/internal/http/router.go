@@ -7,6 +7,7 @@ import (
 	"github.com/bieltris/jimeri/backend/internal/features/auth"
 	"github.com/bieltris/jimeri/backend/internal/features/clients"
 	"github.com/bieltris/jimeri/backend/internal/features/health"
+	"github.com/bieltris/jimeri/backend/internal/features/products"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -22,6 +23,7 @@ func NewRouter(pool *pgxpool.Pool, cfg config.Config) http.Handler {
 
 	authHandler := auth.NewHandler(pool, cfg)
 	clientsHandler := clients.NewHandler(pool)
+	productsHandler := products.NewHandler(pool)
 
 	router.Route("/api", func(api chi.Router) {
 		api.Get("/health", health.Handle(pool))
@@ -30,6 +32,7 @@ func NewRouter(pool *pgxpool.Pool, cfg config.Config) http.Handler {
 		api.Group(func(protected chi.Router) {
 			protected.Use(authHandler.RequireAuth)
 			protected.Mount("/clients", clientsHandler.Routes())
+			protected.Mount("/products", productsHandler.Routes())
 		})
 	})
 
