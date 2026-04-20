@@ -220,6 +220,12 @@ Subir API:
 go run ./cmd/api
 ```
 
+Ou usar o script da raiz:
+
+```powershell
+.\scripts\backend.ps1
+```
+
 Health check:
 
 ```text
@@ -236,6 +242,34 @@ $env:ADMIN_NAME="Admin"
 $env:ADMIN_EMAIL="admin@"
 $env:ADMIN_PASSWORD="123456"
 go run ./cmd/seed-admin
+```
+
+Ou usar o script da raiz:
+
+```powershell
+.\scripts\seed-admin.ps1
+```
+
+## Frontend
+
+Subir o Flutter Web com porta fixa:
+
+```powershell
+.\scripts\frontend.ps1
+```
+
+A aplicacao abre em:
+
+```text
+http://localhost:3000
+```
+
+Essa porta ja esta liberada no CORS local do backend.
+
+Para abrir backend e frontend em janelas separadas:
+
+```powershell
+.\scripts\dev.ps1
 ```
 
 Para rodar a API local com auth:
