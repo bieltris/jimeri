@@ -13,4 +13,16 @@ class ApiRoutes {
   static Uri logout() => Uri.parse('$baseUrl/auth/logout');
 
   static Uri me() => Uri.parse('$baseUrl/auth/me');
+
+  static Uri products({String? search}) {
+    return Uri.parse('$baseUrl/products/').replace(
+      queryParameters: search == null || search.isEmpty
+          ? null
+          : {
+              'search': search,
+            },
+    );
+  }
+
+  static Uri product(String id) => Uri.parse('$baseUrl/products/$id');
 }
