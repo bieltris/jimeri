@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/shared/app_snackbar.dart';
 import 'login_provider.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -28,6 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final loginState = ref.watch(loginProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -106,21 +108,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
                     const SizedBox(height: 24),
-                    Consumer<LoginProvider>(
-                      builder: (context, provider, _) {
-                        return ElevatedButton(
-                          onPressed: provider.isLoading ? null : _submit,
-                          child: provider.isLoading
-                              ? const SizedBox.square(
-                                  dimension: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text('Entrar'),
-                        );
-                      },
+                    ElevatedButton(
+                      onPressed: loginState.isLoading ? null : _submit,
+                      child: loginState.isLoading
+                          ? const SizedBox.square(
+                              dimension: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Entrar'),
                     ),
                   ],
                 ),
@@ -137,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final error = await context.read<LoginProvider>().login(
+    final error = await ref.read(loginProvider.notifier).login(
           email: _emailController.text,
           password: _passwordController.text,
         );
@@ -152,5 +150,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     AppSnackBar.showSuccess('Login realizado.', context: context);
+    context.go('/dashboard');
   }
 }

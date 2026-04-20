@@ -1,18 +1,33 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api/api_exception.dart';
-import '../../core/auth/auth_service.dart';
+import '../../core/auth/auth_providers.dart';
 
-class LoginProvider extends ChangeNotifier {
-  LoginProvider({
-    required AuthService authService,
-  }) : _authService = authService;
+final loginProvider = NotifierProvider<LoginController, LoginState>(
+  LoginController.new,
+);
 
-  final AuthService _authService;
+class LoginState {
+  const LoginState({
+    this.isLoading = false,
+  });
 
-  bool _isLoading = false;
+  final bool isLoading;
 
-  bool get isLoading => _isLoading;
+  LoginState copyWith({
+    bool? isLoading,
+  }) {
+    return LoginState(
+      isLoading: isLoading ?? this.isLoading,
+    );
+  }
+}
+
+class LoginController extends Notifier<LoginState> {
+  @override
+  LoginState build() {
+    return const LoginState();
+  }
 
   Future<String?> login({
     required String email,
@@ -24,10 +39,10 @@ class LoginProvider extends ChangeNotifier {
       return 'Informe email e senha.';
     }
 
-    _setLoading(true);
+    state = state.copyWith(isLoading: true);
 
     try {
-      await _authService.login(
+      await ref.read(authServiceProvider).login(
         email: normalizedEmail,
         password: password,
       );
@@ -36,16 +51,7 @@ class LoginProvider extends ChangeNotifier {
     } on ApiException catch (error) {
       return error.message;
     } finally {
-      _setLoading(false);
+      state = state.copyWith(isLoading: false);
     }
-  }
-
-  void _setLoading(bool value) {
-    if (_isLoading == value) {
-      return;
-    }
-
-    _isLoading = value;
-    notifyListeners();
   }
 }

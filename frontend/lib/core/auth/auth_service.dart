@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../api/api_auth_delegate.dart';
 import '../api/api_client.dart';
 import '../api/api_exception.dart';
@@ -5,7 +7,7 @@ import '../api/api_routes.dart';
 import '../../dtos/auth_response_dto.dart';
 import '../../models/user_model.dart';
 
-class AuthService implements ApiAuthDelegate {
+class AuthService extends ChangeNotifier implements ApiAuthDelegate {
   String? _accessToken;
   UserModel? _currentUser;
 
@@ -41,6 +43,7 @@ class AuthService implements ApiAuthDelegate {
     );
 
     _currentUser = user;
+    notifyListeners();
 
     return user;
   }
@@ -84,10 +87,12 @@ class AuthService implements ApiAuthDelegate {
   void _setSession(AuthResponseDto response) {
     _accessToken = response.accessToken;
     _currentUser = response.user;
+    notifyListeners();
   }
 
   void _clearSession() {
     _accessToken = null;
     _currentUser = null;
+    notifyListeners();
   }
 }
