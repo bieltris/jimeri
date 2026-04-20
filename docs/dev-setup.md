@@ -243,6 +243,7 @@ Para rodar a API local com auth:
 ```powershell
 $env:DATABASE_URL="postgres://postgres:postgres@localhost:5432/jimeri?sslmode=disable"
 $env:ACCESS_TOKEN_SECRET="dev-access-secret"
+$env:APP_TIMEZONE="America/Sao_Paulo"
 $env:REFRESH_COOKIE_SECURE="false"
 go run ./cmd/api
 ```
@@ -254,4 +255,9 @@ POST /api/auth/login
 POST /api/auth/refresh
 POST /api/auth/logout
 GET  /api/auth/me
+GET  /api/clients/{clientID}/whatsapp-charge
+POST /api/payments
+GET  /api/payments/client/{clientID}
+GET  /api/reports/dashboard
+GET  /api/reports/debts
 ```

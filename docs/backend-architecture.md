@@ -13,6 +13,7 @@ Principais responsabilidades:
 - acessar o PostgreSQL;
 - aplicar regras de negocio;
 - devolver respostas JSON tipadas para o frontend.
+- gerar dados de cobranca por WhatsApp.
 
 Stack principal:
 
@@ -83,7 +84,10 @@ Exemplo conceitual:
 /api/health
 /api/auth
 /api/clients
+/api/orders
+/api/payments
 /api/products
+/api/reports
 ```
 
 Rotas administrativas ficam dentro de um grupo protegido por autenticação.
@@ -245,6 +249,48 @@ GET  /api/auth/me
 
 Rotas administrativas usam middleware de autenticação.
 
+## Pagamentos
+
+Pagamentos diminuem a divida calculada do cliente.
+
+Regra inicial:
+
+- o valor deve ser maior que zero;
+- o cliente precisa ter divida;
+- pagamento maior que a divida nao e permitido;
+- pagamentos cancelados nao entram no calculo da divida.
+
+## Relatorios
+
+Relatorios usam queries tipadas e dados calculados pelo banco.
+
+Endpoints iniciais:
+
+```text
+GET /api/reports/dashboard
+GET /api/reports/debts
+```
+
+O dashboard usa `APP_TIMEZONE` para calcular o intervalo do dia.
+
+## Cobranca Por WhatsApp
+
+A cobranca por WhatsApp e gerada a partir do cliente e da divida atual.
+
+Endpoint inicial:
+
+```text
+GET /api/clients/{clientID}/whatsapp-charge
+```
+
+O backend devolve:
+
+- cliente;
+- saldo em aberto;
+- numero do responsavel;
+- mensagem sugerida;
+- URL `https://wa.me/...` pronta para abrir no frontend.
+
 ## Fluxo De Uma Request
 
 Exemplo: criar produto.
@@ -269,4 +315,3 @@ POST /api/products
 - Helpers compartilhados devem ficar em pacotes pequenos dentro de `internal`.
 - Campos monetarios sempre usam centavos.
 - Registros financeiros devem ser cancelados, nao apagados.
-

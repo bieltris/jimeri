@@ -10,6 +10,7 @@ type Config struct {
 	HTTPAddr            string
 	DatabaseURL         string
 	AccessTokenSecret   string
+	AppTimezone         string
 	RefreshCookieName   string
 	RefreshCookieSecure bool
 }
@@ -22,6 +23,7 @@ func Load() Config {
 		HTTPAddr:            env("HTTP_ADDR", ":8080"),
 		DatabaseURL:         env("DATABASE_URL", ""),
 		AccessTokenSecret:   env("ACCESS_TOKEN_SECRET", ""),
+		AppTimezone:         env("APP_TIMEZONE", "America/Sao_Paulo"),
 		RefreshCookieName:   env("REFRESH_COOKIE_NAME", "jimeri_refresh_token"),
 		RefreshCookieSecure: envBool("REFRESH_COOKIE_SECURE", appEnv == "production"),
 	}

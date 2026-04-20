@@ -8,7 +8,9 @@ import (
 	"github.com/bieltris/jimeri/backend/internal/features/clients"
 	"github.com/bieltris/jimeri/backend/internal/features/health"
 	"github.com/bieltris/jimeri/backend/internal/features/orders"
+	"github.com/bieltris/jimeri/backend/internal/features/payments"
 	"github.com/bieltris/jimeri/backend/internal/features/products"
+	"github.com/bieltris/jimeri/backend/internal/features/reports"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -25,7 +27,9 @@ func NewRouter(pool *pgxpool.Pool, cfg config.Config) http.Handler {
 	authHandler := auth.NewHandler(pool, cfg)
 	clientsHandler := clients.NewHandler(pool)
 	ordersHandler := orders.NewHandler(pool)
+	paymentsHandler := payments.NewHandler(pool)
 	productsHandler := products.NewHandler(pool)
+	reportsHandler := reports.NewHandler(pool, cfg)
 
 	router.Route("/api", func(api chi.Router) {
 		api.Get("/health", health.Handle(pool))
@@ -35,7 +39,9 @@ func NewRouter(pool *pgxpool.Pool, cfg config.Config) http.Handler {
 			protected.Use(authHandler.RequireAuth)
 			protected.Mount("/clients", clientsHandler.Routes())
 			protected.Mount("/orders", ordersHandler.Routes())
+			protected.Mount("/payments", paymentsHandler.Routes())
 			protected.Mount("/products", productsHandler.Routes())
+			protected.Mount("/reports", reportsHandler.Routes())
 		})
 	})
 
