@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/clients/clients_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/login/login_screen.dart';
+import '../../features/orders/orders_screen.dart';
 import '../../features/payments/payments_screen.dart';
 import '../../features/placeholder/placeholder_screen.dart';
 import '../../features/products/products_screen.dart';
@@ -51,10 +52,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/orders',
-        builder: (context, state) => const PlaceholderScreen(
-          title: 'Pedidos',
-          description: 'Registro das compras feitas pelos clientes.',
-        ),
+        builder: (context, state) => const OrdersScreen(),
       ),
       GoRoute(
         path: '/payments',

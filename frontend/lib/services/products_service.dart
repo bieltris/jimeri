@@ -13,6 +13,13 @@ class ProductsService {
     );
   }
 
+  Future<List<ProductModel>> listActive() {
+    return ApiClient.get<List<ProductModel>>(
+      ApiRoutes.activeProducts(),
+      fromJson: ApiClient.listFromJson(ProductModel.fromJson),
+    );
+  }
+
   Future<ProductModel> create({
     required String name,
     required int priceCents,

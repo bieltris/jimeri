@@ -36,6 +36,13 @@ class ApiRoutes {
 
   static Uri cancelPayment(String id) => Uri.parse('$baseUrl/payments/$id/cancel');
 
+  static Uri orders() => Uri.parse('$baseUrl/orders/');
+
+  static Uri clientOrders(String clientId) =>
+      Uri.parse('$baseUrl/orders/client/$clientId');
+
+  static Uri cancelOrder(String id) => Uri.parse('$baseUrl/orders/$id/cancel');
+
   static Uri products({String? search}) {
     return Uri.parse('$baseUrl/products/').replace(
       queryParameters: search == null || search.isEmpty
@@ -45,6 +52,8 @@ class ApiRoutes {
             },
     );
   }
+
+  static Uri activeProducts() => Uri.parse('$baseUrl/products/active');
 
   static Uri product(String id) => Uri.parse('$baseUrl/products/$id');
 
