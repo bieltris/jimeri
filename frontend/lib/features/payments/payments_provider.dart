@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_exception.dart';
 import '../../dtos/client_with_balance_dto.dart';
 import '../../models/payment_model.dart';
-import '../../services/clients_service.dart';
 import '../../services/payments_service.dart';
 import '../clients/clients_provider.dart';
 

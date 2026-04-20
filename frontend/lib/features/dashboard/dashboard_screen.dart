@@ -22,7 +22,7 @@ class DashboardScreen extends StatelessWidget {
         route: '/products',
       ),
       const _DashboardAction(
-        title: 'Pedidos',
+        title: 'Registrar Pedidos',
         description: 'Marcar compras do dia',
         icon: Icons.receipt_long_outlined,
         route: '/orders',

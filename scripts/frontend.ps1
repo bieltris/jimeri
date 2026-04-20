@@ -7,4 +7,4 @@ $frontend = Join-Path $root "frontend"
 Set-Location $frontend
 
 Write-Host "Subindo Flutter Web em http://localhost:3000" -ForegroundColor Cyan
-flutter run -d chrome --web-port 3000
+flutter run -d edge --web-port 3000
