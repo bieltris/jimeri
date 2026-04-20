@@ -125,8 +125,8 @@ class _ClientPicker extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border.all(color: AppColors.neutral200),
+        color: _cardColor(context),
+        border: Border.all(color: _borderColor(context)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -223,7 +223,9 @@ class _ClientDebtStrip extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: hasDebt ? AppColors.warning.withOpacity(0.14) : AppColors.accentLight,
+        color: hasDebt
+            ? _softWarningColor(context)
+            : _softSuccessColor(context),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -231,7 +233,9 @@ class _ClientDebtStrip extends StatelessWidget {
             ? 'Divida atual: ${formatCents(client.balanceCents)}'
             : 'Sem divida aberta.',
         style: TextStyle(
-          color: hasDebt ? AppColors.neutral950 : AppColors.accentDark,
+          color: hasDebt
+              ? _warningTextColor(context)
+              : _successTextColor(context),
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -251,13 +255,11 @@ class _ProductsGrid extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final columns = width >= 920
-            ? 4
-            : width >= 680
-                ? 3
-                : width >= 440
-                    ? 2
-                    : 1;
+        final columns = width >= 680
+            ? 3
+            : width >= 440
+                ? 2
+                : 1;
 
         return GridView.builder(
           shrinkWrap: true,
@@ -267,7 +269,7 @@ class _ProductsGrid extends ConsumerWidget {
             crossAxisCount: columns,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            mainAxisExtent: columns == 1 ? 132 : 152,
+            mainAxisExtent: columns == 1 ? 162 : 188,
           ),
           itemBuilder: (context, index) {
             final product = products[index];
@@ -279,9 +281,10 @@ class _ProductsGrid extends ConsumerWidget {
                   (state) => state.quantityForProduct(product.id),
                 ),
               ),
-              onTap: () {
-                ref.read(ordersProvider.notifier).addProduct(product);
-              },
+              onRemove: () => ref
+                  .read(ordersProvider.notifier)
+                  .decrementProduct(product.id),
+              onAdd: () => ref.read(ordersProvider.notifier).addProduct(product),
             );
           },
         );
@@ -294,84 +297,152 @@ class _ProductButton extends StatelessWidget {
   const _ProductButton({
     required this.product,
     required this.quantity,
-    required this.onTap,
+    required this.onRemove,
+    required this.onAdd,
   });
 
   final ProductModel product;
   final int quantity;
-  final VoidCallback onTap;
+  final VoidCallback onRemove;
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
     final hasQuantity = quantity > 0;
 
-    return Material(
-      color: hasQuantity ? AppColors.primaryLight : Theme.of(context).colorScheme.surface,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
+    return Container(
+      decoration: BoxDecoration(
+        color: hasQuantity ? _selectedProductColor(context) : _cardColor(context),
+        border: Border.all(
+          color: hasQuantity ? AppColors.primary : _borderColor(context),
+          width: hasQuantity ? 2 : 1,
+        ),
         borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: hasQuantity ? AppColors.primary : AppColors.neutral200,
-              width: hasQuantity ? 2 : 1,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      product.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                  ),
-                  if (hasQuantity)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'x$quantity',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          product.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
                         ),
                       ),
-                    ),
+                      if (hasQuantity)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'x$quantity',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Text(
+                    product.category?.name ?? 'Sem categoria',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    formatCents(product.priceCents),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w900,
+                        ),
+                  ),
                 ],
               ),
-              const Spacer(),
-              Text(
-                product.category?.name ?? 'Sem categoria',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                formatCents(product.priceCents),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w900,
-                    ),
-              ),
-            ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _ProductActionButton(
+                    icon: Icons.remove,
+                    label: 'Remover',
+                    backgroundColor: AppColors.error,
+                    onPressed: hasQuantity ? onRemove : null,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ProductActionButton(
+                    icon: Icons.add,
+                    label: 'Adicionar',
+                    backgroundColor: AppColors.accent,
+                    onPressed: onAdd,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductActionButton extends StatelessWidget {
+  const _ProductActionButton({
+    required this.icon,
+    required this.label,
+    required this.backgroundColor,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color backgroundColor;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 42,
+      child: FilledButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        label: Text(
+          label,
+          overflow: TextOverflow.ellipsis,
+        ),
+        style: FilledButton.styleFrom(
+          backgroundColor: backgroundColor,
+          disabledBackgroundColor: backgroundColor.withOpacity(0.26),
+          foregroundColor: Colors.white,
+          disabledForegroundColor: Colors.white70,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
           ),
         ),
       ),
@@ -396,8 +467,8 @@ class _CartPanel extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border.all(color: AppColors.neutral200),
+        color: _cardColor(context),
+        border: Border.all(color: _borderColor(context)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -521,6 +592,7 @@ class _CartItemRow extends ConsumerWidget {
           ),
           _QuantityButton(
             icon: Icons.remove,
+            backgroundColor: AppColors.error,
             onPressed: () => ref
                 .read(ordersProvider.notifier)
                 .decrementProduct(item.product.id),
@@ -535,6 +607,7 @@ class _CartItemRow extends ConsumerWidget {
           ),
           _QuantityButton(
             icon: Icons.add,
+            backgroundColor: AppColors.accent,
             onPressed: () => ref
                 .read(ordersProvider.notifier)
                 .addProduct(item.product),
@@ -548,19 +621,28 @@ class _CartItemRow extends ConsumerWidget {
 class _QuantityButton extends StatelessWidget {
   const _QuantityButton({
     required this.icon,
+    required this.backgroundColor,
     required this.onPressed,
   });
 
   final IconData icon;
+  final Color backgroundColor;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox.square(
       dimension: 34,
-      child: IconButton.outlined(
+      child: IconButton.filled(
         padding: EdgeInsets.zero,
         onPressed: onPressed,
+        style: IconButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
         icon: Icon(icon, size: 18),
       ),
     );
@@ -608,9 +690,9 @@ class _EmptyCart extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.neutral50,
+        color: _subtleCardColor(context),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.neutral200),
+        border: Border.all(color: _borderColor(context)),
       ),
       child: Column(
         children: [
@@ -643,16 +725,57 @@ class _WarningBar extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.warning.withOpacity(0.14),
+        color: _softWarningColor(context),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         message,
-        style: const TextStyle(
-          color: AppColors.neutral950,
+        style: TextStyle(
+          color: _warningTextColor(context),
           fontWeight: FontWeight.w700,
         ),
       ),
     );
   }
+}
+
+Color _cardColor(BuildContext context) {
+  return Theme.of(context).colorScheme.surface;
+}
+
+Color _subtleCardColor(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return isDark ? AppColors.neutral950 : AppColors.neutral50;
+}
+
+Color _borderColor(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return isDark ? AppColors.neutral600 : AppColors.neutral200;
+}
+
+Color _selectedProductColor(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return isDark
+      ? AppColors.primaryDark.withOpacity(0.28)
+      : AppColors.primaryLight;
+}
+
+Color _softSuccessColor(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return isDark ? AppColors.accentDark.withOpacity(0.24) : AppColors.accentLight;
+}
+
+Color _successTextColor(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return isDark ? AppColors.accentLight : AppColors.accentDark;
+}
+
+Color _softWarningColor(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return AppColors.warning.withOpacity(isDark ? 0.22 : 0.14);
+}
+
+Color _warningTextColor(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return isDark ? Colors.white : AppColors.neutral950;
 }
