@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/shared/app_snackbar.dart';
+import '../../core/theme/app_colors.dart';
 import 'login_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -28,7 +29,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final loginState = ref.watch(loginProvider);
 
     return Scaffold(
@@ -45,10 +45,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Jimeri',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                            color: colors.primary,
+                          'Jimeri',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                            color: AppColors.primary,
                             fontWeight: FontWeight.w800,
                           ),
                     ),
@@ -56,9 +56,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Text(
                       'Acesse o painel da cantina.',
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: const Color(0xFF475569),
-                          ),
+                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 32),
                     TextFormField(

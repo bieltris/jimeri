@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+
 final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 
@@ -12,7 +14,7 @@ class AppSnackBar {
     Duration duration = const Duration(seconds: 2),
     BuildContext? context,
   }) {
-    _show(message, Colors.green, duration: duration, context: context);
+    _show(message, AppColors.accent, duration: duration, context: context);
   }
 
   static void showError(
@@ -20,7 +22,7 @@ class AppSnackBar {
     Duration duration = const Duration(seconds: 3),
     BuildContext? context,
   }) {
-    _show(message, Colors.red, duration: duration, context: context);
+    _show(message, AppColors.error, duration: duration, context: context);
   }
 
   static void showWarning(
@@ -28,7 +30,7 @@ class AppSnackBar {
     Duration duration = const Duration(seconds: 3),
     BuildContext? context,
   }) {
-    _show(message, Colors.orange, duration: duration, context: context);
+    _show(message, AppColors.warning, duration: duration, context: context);
   }
 
   static void _show(
