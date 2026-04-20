@@ -7,6 +7,7 @@ final authServiceProvider = Provider<AuthService>((ref) {
   final authService = AuthService();
 
   configureApiClient(auth: authService);
+  Future.microtask(authService.tryAutoLogin);
   ref.onDispose(authService.dispose);
 
   return authService;

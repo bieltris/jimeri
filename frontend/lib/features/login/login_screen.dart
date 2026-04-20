@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/auth/auth_providers.dart';
 import '../../core/shared/app_snackbar.dart';
 import '../../core/theme/app_colors.dart';
 import 'login_provider.dart';
@@ -30,6 +31,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final loginState = ref.watch(loginProvider);
+    final authService = ref.watch(authServiceProvider);
+
+    if (authService.isCheckingSession) {
+      return const Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: SafeArea(
