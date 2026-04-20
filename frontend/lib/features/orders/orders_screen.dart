@@ -91,11 +91,11 @@ class _MobileCartOverlayState extends ConsumerState<_MobileCartOverlay> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth >= 920 || widget.state.isLoading) {
-          return const SizedBox.shrink();
+        if (constraints.maxWidth >= 920 || widget.state.isLoading || widget.state.selectedClient == null) {
+          return const SizedBox();
         }
 
-        final height = _expanded ? constraints.maxHeight * 0.65 : 66.0;
+        final height = _expanded ? constraints.maxHeight * 0.85 : 66.0;
 
         return Align(
           alignment: Alignment.bottomCenter,
@@ -931,7 +931,7 @@ Color _warningTextColor(BuildContext context) {
 
 Color _floatingCartColor(BuildContext context) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  return isDark ? AppColors.primaryDark : AppColors.primary;
+  return isDark ? AppColors.neutralBlue : AppColors.primary;
 }
 
 Color _floatingCartBorderColor(BuildContext context) {

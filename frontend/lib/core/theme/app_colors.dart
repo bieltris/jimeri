@@ -19,6 +19,8 @@ class AppColors {
   static const Color neutral800 = Color(0xFF1E293B);
   static const Color neutral950 = Color(0xFF020617);
 
+  static const Color neutralBlue = Color(0xFF0E2C5C);
+
   static const Color error = Color(0xFFDC2626);
   static const Color warning = Color(0xFFF59E0B);
 }
