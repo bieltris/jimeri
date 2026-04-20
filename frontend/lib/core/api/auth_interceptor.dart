@@ -9,6 +9,16 @@ class AuthInterceptor implements InterceptorContract {
   final ApiAuthDelegate _auth;
 
   @override
+  bool shouldInterceptRequest() {
+    return true;
+  }
+
+  @override
+  bool shouldInterceptResponse() {
+    return true;
+  }
+
+  @override
   Future<BaseRequest> interceptRequest({required BaseRequest request}) async {
     if (_auth.shouldSkipAuth(request.url)) {
       return request;
