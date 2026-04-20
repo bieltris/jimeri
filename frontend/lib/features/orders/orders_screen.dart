@@ -25,6 +25,7 @@ class OrdersScreen extends ConsumerWidget {
             state.isLoading ? null : ref.read(ordersProvider.notifier).loadData,
         icon: const Icon(Icons.refresh),
       ),
+      floatingOverlay: _MobileCartOverlay(state: state),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -48,8 +49,7 @@ class OrdersScreen extends ConsumerWidget {
                   return Column(
                     children: [
                       _SaleBoard(state: state),
-                      const SizedBox(height: 16),
-                      _CartPanel(state: state),
+                      const SizedBox(height: 92),
                     ],
                   );
                 }
@@ -68,6 +68,155 @@ class OrdersScreen extends ConsumerWidget {
               },
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _MobileCartOverlay extends ConsumerStatefulWidget {
+  const _MobileCartOverlay({
+    required this.state,
+  });
+
+  final OrdersState state;
+
+  @override
+  ConsumerState<_MobileCartOverlay> createState() => _MobileCartOverlayState();
+}
+
+class _MobileCartOverlayState extends ConsumerState<_MobileCartOverlay> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 920 || widget.state.isLoading) {
+          return const SizedBox.shrink();
+        }
+
+        final height = _expanded ? constraints.maxHeight * 0.65 : 66.0;
+
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              width: double.infinity,
+              height: height,
+              decoration: BoxDecoration(
+                color: _floatingCartColor(context),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _floatingCartBorderColor(context)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black38,
+                    blurRadius: 14,
+                    offset: Offset(0, 5),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  _MobileCartHeader(
+                    state: widget.state,
+                    expanded: _expanded,
+                    onTap: () {
+                      setState(() {
+                        _expanded = !_expanded;
+                      });
+                    },
+                  ),
+                  if (_expanded)
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                        child: _CartPanel(state: widget.state),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _MobileCartHeader extends StatelessWidget {
+  const _MobileCartHeader({
+    required this.state,
+    required this.expanded,
+    required this.onTap,
+  });
+
+  final OrdersState state;
+  final bool expanded;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final clientName = state.selectedClient?.client.name ?? 'Sem cliente';
+    final itemCount = state.cart.fold<int>(
+      0,
+      (total, item) => total + item.quantity,
+    );
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          height: 64,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        clientName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$itemCount itens - ${formatCents(state.totalCents)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                AnimatedRotation(
+                  turns: expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const Icon(
+                    Icons.keyboard_arrow_up,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -778,4 +927,14 @@ Color _softWarningColor(BuildContext context) {
 Color _warningTextColor(BuildContext context) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   return isDark ? Colors.white : AppColors.neutral950;
+}
+
+Color _floatingCartColor(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return isDark ? AppColors.primaryDark : AppColors.primary;
+}
+
+Color _floatingCartBorderColor(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return isDark ? AppColors.primaryLight.withOpacity(0.38) : AppColors.primaryDark;
 }
