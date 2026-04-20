@@ -1,11 +1,9 @@
 package products
 
 import (
-	"time"
-
 	"github.com/bieltris/jimeri/backend/internal/db"
+	"github.com/bieltris/jimeri/backend/internal/pgconv"
 	"github.com/bieltris/jimeri/backend/internal/uuidutil"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type productResponse struct {
@@ -31,26 +29,10 @@ func toProductResponse(product db.Product) productResponse {
 	return productResponse{
 		ID:         uuidutil.ToString(product.ID),
 		Name:       product.Name,
-		Category:   textPointer(product.Category),
+		Category:   pgconv.TextPointer(product.Category),
 		PriceCents: product.PriceCents,
 		Active:     product.Active,
-		CreatedAt:  timeString(product.CreatedAt),
-		UpdatedAt:  timeString(product.UpdatedAt),
+		CreatedAt:  pgconv.TimeString(product.CreatedAt),
+		UpdatedAt:  pgconv.TimeString(product.UpdatedAt),
 	}
-}
-
-func textPointer(value pgtype.Text) *string {
-	if !value.Valid {
-		return nil
-	}
-
-	return &value.String
-}
-
-func timeString(value pgtype.Timestamptz) string {
-	if !value.Valid {
-		return ""
-	}
-
-	return value.Time.Format(time.RFC3339)
 }

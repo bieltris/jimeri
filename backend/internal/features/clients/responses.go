@@ -1,11 +1,9 @@
 package clients
 
 import (
-	"time"
-
 	"github.com/bieltris/jimeri/backend/internal/db"
+	"github.com/bieltris/jimeri/backend/internal/pgconv"
 	"github.com/bieltris/jimeri/backend/internal/uuidutil"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type clientResponse struct {
@@ -29,12 +27,12 @@ func clientWithBalanceFromListRow(row db.ListClientsRow) clientWithBalanceRespon
 		Client: clientResponse{
 			ID:                  uuidutil.ToString(row.ID),
 			Name:                row.Name,
-			ResponsibleName:     textPointer(row.ResponsibleName),
-			ResponsibleWhatsapp: textPointer(row.ResponsibleWhatsapp),
-			Note:                textPointer(row.Note),
+			ResponsibleName:     pgconv.TextPointer(row.ResponsibleName),
+			ResponsibleWhatsapp: pgconv.TextPointer(row.ResponsibleWhatsapp),
+			Note:                pgconv.TextPointer(row.Note),
 			Active:              row.Active,
-			CreatedAt:           timeString(row.CreatedAt),
-			UpdatedAt:           timeString(row.UpdatedAt),
+			CreatedAt:           pgconv.TimeString(row.CreatedAt),
+			UpdatedAt:           pgconv.TimeString(row.UpdatedAt),
 		},
 		BalanceCents: row.BalanceCents,
 	}
@@ -45,12 +43,12 @@ func clientWithBalanceFromDebtRow(row db.ListClientsWithDebtRow) clientWithBalan
 		Client: clientResponse{
 			ID:                  uuidutil.ToString(row.ID),
 			Name:                row.Name,
-			ResponsibleName:     textPointer(row.ResponsibleName),
-			ResponsibleWhatsapp: textPointer(row.ResponsibleWhatsapp),
-			Note:                textPointer(row.Note),
+			ResponsibleName:     pgconv.TextPointer(row.ResponsibleName),
+			ResponsibleWhatsapp: pgconv.TextPointer(row.ResponsibleWhatsapp),
+			Note:                pgconv.TextPointer(row.Note),
 			Active:              row.Active,
-			CreatedAt:           timeString(row.CreatedAt),
-			UpdatedAt:           timeString(row.UpdatedAt),
+			CreatedAt:           pgconv.TimeString(row.CreatedAt),
+			UpdatedAt:           pgconv.TimeString(row.UpdatedAt),
 		},
 		BalanceCents: row.BalanceCents,
 	}
@@ -60,27 +58,11 @@ func toClientResponse(client db.Client) clientResponse {
 	return clientResponse{
 		ID:                  uuidutil.ToString(client.ID),
 		Name:                client.Name,
-		ResponsibleName:     textPointer(client.ResponsibleName),
-		ResponsibleWhatsapp: textPointer(client.ResponsibleWhatsapp),
-		Note:                textPointer(client.Note),
+		ResponsibleName:     pgconv.TextPointer(client.ResponsibleName),
+		ResponsibleWhatsapp: pgconv.TextPointer(client.ResponsibleWhatsapp),
+		Note:                pgconv.TextPointer(client.Note),
 		Active:              client.Active,
-		CreatedAt:           timeString(client.CreatedAt),
-		UpdatedAt:           timeString(client.UpdatedAt),
+		CreatedAt:           pgconv.TimeString(client.CreatedAt),
+		UpdatedAt:           pgconv.TimeString(client.UpdatedAt),
 	}
-}
-
-func textPointer(value pgtype.Text) *string {
-	if !value.Valid {
-		return nil
-	}
-
-	return &value.String
-}
-
-func timeString(value pgtype.Timestamptz) string {
-	if !value.Valid {
-		return ""
-	}
-
-	return value.Time.Format(time.RFC3339)
 }

@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/bieltris/jimeri/backend/internal/httpparam"
+	"github.com/bieltris/jimeri/backend/internal/pgconv"
 	"github.com/bieltris/jimeri/backend/internal/respond"
-	"github.com/bieltris/jimeri/backend/internal/uuidutil"
-	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -40,33 +40,13 @@ func parseProductRequest(w http.ResponseWriter, r *http.Request) (productRequest
 }
 
 func productIDParam(w http.ResponseWriter, r *http.Request) (pgtype.UUID, bool) {
-	productID, err := uuidutil.FromString(chi.URLParam(r, "productID"))
-	if err != nil {
-		respond.Error(w, http.StatusBadRequest, "invalid product id")
-		return pgtype.UUID{}, false
-	}
-
-	return productID, true
+	return httpparam.UUID(w, r, "productID", "invalid product id")
 }
 
 func textFromPointer(value *string) pgtype.Text {
-	if value == nil {
-		return pgtype.Text{}
-	}
-
-	trimmed := strings.TrimSpace(*value)
-	if trimmed == "" {
-		return pgtype.Text{}
-	}
-
-	return pgtype.Text{String: trimmed, Valid: true}
+	return pgconv.TextFromPointer(value)
 }
 
 func textParam(value string) pgtype.Text {
-	trimmed := strings.TrimSpace(value)
-	if trimmed == "" {
-		return pgtype.Text{}
-	}
-
-	return pgtype.Text{String: trimmed, Valid: true}
+	return pgconv.TextFromString(value)
 }

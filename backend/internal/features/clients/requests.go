@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"unicode"
 
+	"github.com/bieltris/jimeri/backend/internal/httpparam"
+	"github.com/bieltris/jimeri/backend/internal/pgconv"
 	"github.com/bieltris/jimeri/backend/internal/respond"
-	"github.com/bieltris/jimeri/backend/internal/uuidutil"
-	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -37,53 +36,17 @@ func parseClientRequest(w http.ResponseWriter, r *http.Request) (clientRequest, 
 }
 
 func clientIDParam(w http.ResponseWriter, r *http.Request) (pgtype.UUID, bool) {
-	clientID, err := uuidutil.FromString(chi.URLParam(r, "clientID"))
-	if err != nil {
-		respond.Error(w, http.StatusBadRequest, "invalid client id")
-		return pgtype.UUID{}, false
-	}
-
-	return clientID, true
+	return httpparam.UUID(w, r, "clientID", "invalid client id")
 }
 
 func textFromPointer(value *string) pgtype.Text {
-	if value == nil {
-		return pgtype.Text{}
-	}
-
-	trimmed := strings.TrimSpace(*value)
-	if trimmed == "" {
-		return pgtype.Text{}
-	}
-
-	return pgtype.Text{String: trimmed, Valid: true}
+	return pgconv.TextFromPointer(value)
 }
 
 func whatsappFromPointer(value *string) pgtype.Text {
-	if value == nil {
-		return pgtype.Text{}
-	}
-
-	var builder strings.Builder
-	for _, char := range *value {
-		if unicode.IsDigit(char) {
-			builder.WriteRune(char)
-		}
-	}
-
-	cleaned := builder.String()
-	if cleaned == "" {
-		return pgtype.Text{}
-	}
-
-	return pgtype.Text{String: cleaned, Valid: true}
+	return pgconv.DigitsTextFromPointer(value)
 }
 
 func textParam(value string) pgtype.Text {
-	trimmed := strings.TrimSpace(value)
-	if trimmed == "" {
-		return pgtype.Text{}
-	}
-
-	return pgtype.Text{String: trimmed, Valid: true}
+	return pgconv.TextFromString(value)
 }
