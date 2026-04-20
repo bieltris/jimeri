@@ -272,6 +272,7 @@ class OrdersController extends Notifier<OrdersState> {
         clients: state.clients.map((item) {
           return item.client.id == updatedClient.client.id ? updatedClient : item;
         }).toList(),
+        clearSelectedClient: true,
         cart: const [],
         note: '',
         productSearch: '',
