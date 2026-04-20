@@ -5,7 +5,7 @@ Guia curto para subir a primeira versao funcional em producao.
 Stack da beta:
 
 - Banco: Neon Postgres
-- API: Koyeb com Dockerfile
+- API: Render Web Service com Dockerfile
 - Frontend: Cloudflare Pages, com upload direto do build
 
 ## 1. Criar Banco No Neon
@@ -43,40 +43,33 @@ go run ./cmd/seed-admin
 
 Depois da beta estar no ar, troque a senha por uma senha real.
 
-## 4. Criar API No Koyeb
+## 4. Criar API No Render
 
-No painel do Koyeb:
+No painel do Render:
 
-1. Crie um App chamado `jimeri-api`.
+1. Crie um novo Web Service.
 2. Escolha deploy por GitHub.
 3. Selecione o repositorio `bieltris/jimeri`.
 4. Escolha a branch `main`.
-5. Em Builder, escolha `Dockerfile`.
-6. Em Work directory, coloque:
+5. Em Runtime, escolha `Docker`.
+6. Em Root Directory, coloque:
 
 ```text
 backend
 ```
 
-7. Em Dockerfile location, deixe:
+7. Em Instance Type, escolha `Free`.
+8. Em Region, escolha a mais proxima disponivel.
 
-```text
-Dockerfile
-```
+O Render vai usar o `backend/Dockerfile`.
 
-8. Em Port, use:
-
-```text
-8080
-```
-
-## 5. Configurar Variaveis Da API No Koyeb
+## 5. Configurar Variaveis Da API No Render
 
 No service da API, configure as variaveis:
 
 ```text
 APP_ENV=production
-HTTP_ADDR=:8080
+HTTP_ADDR=:10000
 DATABASE_URL=postgresql://USER:PASSWORD@HOST/jimeri?sslmode=require
 ACCESS_TOKEN_SECRET=gere-um-secret-grande-aqui
 APP_TIMEZONE=America/Sao_Paulo
@@ -95,28 +88,30 @@ Para gerar um secret localmente:
 [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }))
 ```
 
-## 6. Subir API No Koyeb
+## 6. Subir API No Render
 
 Clique para criar/deployar o service.
 
-Quando terminar, o Koyeb vai fornecer uma URL parecida com:
+Quando terminar, o Render vai fornecer uma URL parecida com:
 
 ```text
-https://jimeri-api-SEU-USUARIO.koyeb.app
+https://jimeri-api.onrender.com
 ```
 
 Teste:
 
 ```text
-https://jimeri-api-SEU-USUARIO.koyeb.app/api/health
+https://jimeri-api.onrender.com/api/health
 ```
+
+Observacao: no plano free, o service pode dormir depois de inatividade. A primeira requisicao depois de dormir pode demorar.
 
 ## 7. Buildar Frontend Para Producao
 
-Na pasta `frontend`, substitua a URL pela URL real do Koyeb:
+Na pasta `frontend`, substitua a URL pela URL real do Render:
 
 ```powershell
-flutter build web --release --dart-define=API_BASE_URL=https://jimeri-api-SEU-USUARIO.koyeb.app/api
+flutter build web --release --dart-define=API_BASE_URL=https://jimeri-api.onrender.com/api
 ```
 
 O build fica em:
@@ -147,7 +142,7 @@ https://jimeri.pages.dev
 
 ## 9. Atualizar CORS Com A URL Real
 
-Volte no Koyeb e altere:
+Volte no Render e altere:
 
 ```text
 CORS_ALLOWED_ORIGINS=https://jimeri.pages.dev
@@ -167,11 +162,11 @@ Teste em producao:
 - Registrar pagamento
 - Cobrar pelo WhatsApp
 
-Se algum passo falhar, olhe primeiro os logs do service no Koyeb.
+Se algum passo falhar, olhe primeiro os logs do service no Render.
 
 ## Observacoes
 
 - Nao commite secrets reais.
 - O arquivo `backend/.env.production.example` e apenas modelo.
 - O refresh token usa cookie seguro em producao, entao precisa de HTTPS.
-- Cloudflare Pages e Koyeb entregam HTTPS por padrao.
+- Cloudflare Pages e Render entregam HTTPS por padrao.
