@@ -1,13 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/money.dart';
+import '../../dtos/client_with_balance_dto.dart';
+import '../../services/clients_service.dart';
 
-class DashboardScreen extends StatelessWidget {
+final dashboardClientsProvider =
+    FutureProvider<List<ClientWithBalanceDto>>((ref) {
+  return ClientsService().list();
+});
+
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final clientsAsync = ref.watch(dashboardClientsProvider);
+    final clients = clientsAsync.value ?? const <ClientWithBalanceDto>[];
+    final totalDebtCents = clients.fold<int>(
+      0,
+      (total, item) => total + (item.balanceCents > 0 ? item.balanceCents : 0),
+    );
+    final clientsWithDebt = clients.where(
+      (item) => item.balanceCents > 0,
+    ).length;
+    final activeClients = clients.where(
+      (item) => item.client.active,
+    ).length;
+
     final actions = [
       const _DashboardAction(
         title: 'Clientes',
@@ -33,12 +55,6 @@ class DashboardScreen extends StatelessWidget {
         icon: Icons.payments_outlined,
         route: '/payments',
       ),
-      const _DashboardAction(
-        title: 'Relatorios',
-        description: 'Ver saldos e movimento',
-        icon: Icons.bar_chart_outlined,
-        route: '/reports',
-      ),
     ];
 
     return Scaffold(
@@ -61,6 +77,13 @@ class DashboardScreen extends StatelessWidget {
                   Text(
                     'Escolha uma area para continuar.',
                     style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 32),
+                  _DashboardSummary(
+                    isLoading: clientsAsync.isLoading,
+                    totalDebtCents: totalDebtCents,
+                    clientsWithDebt: clientsWithDebt,
+                    activeClients: activeClients,
                   ),
                   const SizedBox(height: 32),
                   Text(
@@ -93,6 +116,107 @@ class DashboardScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DashboardSummary extends StatelessWidget {
+  const _DashboardSummary({
+    required this.isLoading,
+    required this.totalDebtCents,
+    required this.clientsWithDebt,
+    required this.activeClients,
+  });
+
+  final bool isLoading;
+  final int totalDebtCents;
+  final int clientsWithDebt;
+  final int activeClients;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return const LinearProgressIndicator();
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 720 ? 3 : 1;
+
+        return GridView(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: columns == 1 ? 4.4 : 2.1,
+          ),
+          children: [
+            _SummaryCard(
+              title: 'Total em aberto',
+              value: formatCents(totalDebtCents),
+              color: totalDebtCents > 0 ? AppColors.error : AppColors.accent,
+            ),
+            _SummaryCard(
+              title: 'Clientes devendo',
+              value: clientsWithDebt.toString(),
+              color: clientsWithDebt > 0 ? AppColors.warning : AppColors.accent,
+            ),
+            _SummaryCard(
+              title: 'Clientes ativos',
+              value: activeClients.toString(),
+              color: AppColors.primary,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({
+    required this.title,
+    required this.value,
+    required this.color,
+  });
+
+  final String title;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border.all(color: AppColors.neutral300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w900,
+                ),
+          ),
+        ],
       ),
     );
   }

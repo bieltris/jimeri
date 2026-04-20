@@ -3,9 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/shared/admin_page.dart';
 import '../../core/shared/app_snackbar.dart';
+import '../../core/platform/open_external_url.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/money.dart';
 import '../../dtos/client_with_balance_dto.dart';
+import '../../services/clients_service.dart';
+import '../../services/payments_service.dart';
+import '../payments/payments_provider.dart';
+import '../payments/widgets/payment_form_dialog.dart';
 import 'clients_provider.dart';
 import 'widgets/client_form_dialog.dart';
 
@@ -44,6 +49,8 @@ class ClientsScreen extends ConsumerWidget {
               clients: clients,
               onEdit: (client) => _openForm(context, ref, client),
               onToggleStatus: (client) => _toggleStatus(context, ref, client),
+              onCharge: (client) => _chargeClient(context, client),
+              onPayment: (client) => _openPaymentForm(context, ref, client),
             ),
         ],
       ),
@@ -105,6 +112,69 @@ class ClientsScreen extends ConsumerWidget {
       context: context,
     );
   }
+
+  Future<void> _chargeClient(
+    BuildContext context,
+    ClientWithBalanceDto client,
+  ) async {
+    try {
+      final charge = await ClientsService().whatsappCharge(client.client.id);
+
+      if (!context.mounted) {
+        return;
+      }
+
+      openExternalUrl(charge.url);
+      AppSnackBar.showSuccess('Cobranca aberta no WhatsApp.', context: context);
+    } catch (_) {
+      if (!context.mounted) {
+        return;
+      }
+
+      AppSnackBar.showError(
+        'Nao foi possivel abrir a cobranca. Confira WhatsApp e divida.',
+        context: context,
+      );
+    }
+  }
+
+  Future<void> _openPaymentForm(
+    BuildContext context,
+    WidgetRef ref,
+    ClientWithBalanceDto client,
+  ) async {
+    final input = await showDialog<PaymentFormInput>(
+      context: context,
+      builder: (context) => const PaymentFormDialog(),
+    );
+
+    if (input == null || !context.mounted) {
+      return;
+    }
+
+    try {
+      await PaymentsService().create(
+        clientId: client.client.id,
+        amountCents: input.amountCents,
+        paymentMethod: input.paymentMethod,
+        note: input.note,
+      );
+
+      await ref.read(clientsProvider.notifier).loadClients();
+
+      if (!context.mounted) {
+        return;
+      }
+
+      AppSnackBar.showSuccess('Pagamento registrado.', context: context);
+    } catch (_) {
+      if (!context.mounted) {
+        return;
+      }
+
+      AppSnackBar.showError('Nao foi possivel registrar o pagamento.', context: context);
+    }
+  }
 }
 
 class _ClientFilters extends ConsumerWidget {
@@ -159,11 +229,15 @@ class _ClientsList extends StatelessWidget {
     required this.clients,
     required this.onEdit,
     required this.onToggleStatus,
+    required this.onCharge,
+    required this.onPayment,
   });
 
   final List<ClientWithBalanceDto> clients;
   final ValueChanged<ClientWithBalanceDto> onEdit;
   final ValueChanged<ClientWithBalanceDto> onToggleStatus;
+  final ValueChanged<ClientWithBalanceDto> onCharge;
+  final ValueChanged<ClientWithBalanceDto> onPayment;
 
   @override
   Widget build(BuildContext context) {
@@ -220,6 +294,20 @@ class _ClientsList extends StatelessWidget {
                     onPressed: () => onEdit(item),
                     child: const Text('Editar'),
                   ),
+                  if (hasDebt)
+                    FilledButton.icon(
+                      onPressed: () => onPayment(item),
+                      icon: const Icon(Icons.payments_outlined),
+                      label: const Text('Pagar'),
+                    ),
+                  if (hasDebt)
+                    OutlinedButton.icon(
+                      onPressed: _hasWhatsapp(client.responsibleWhatsapp)
+                          ? () => onCharge(item)
+                          : null,
+                      icon: const Icon(Icons.chat_outlined),
+                      label: const Text('Cobrar'),
+                    ),
                   TextButton(
                     onPressed: () => onToggleStatus(item),
                     child: Text(client.active ? 'Desativar' : 'Ativar'),
@@ -232,6 +320,10 @@ class _ClientsList extends StatelessWidget {
       }).toList(),
     );
   }
+}
+
+bool _hasWhatsapp(String? value) {
+  return value != null && value.trim().isNotEmpty;
 }
 
 class _EmptyClients extends StatelessWidget {

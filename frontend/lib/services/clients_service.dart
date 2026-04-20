@@ -1,6 +1,7 @@
 import '../core/api/api_client.dart';
 import '../core/api/api_routes.dart';
 import '../dtos/client_with_balance_dto.dart';
+import '../dtos/whatsapp_charge_dto.dart';
 
 class ClientsService {
   Future<List<ClientWithBalanceDto>> list({
@@ -48,6 +49,13 @@ class ClientsService {
         'active': active,
       },
       fromJson: ClientWithBalanceDto.fromJson,
+    );
+  }
+
+  Future<WhatsappChargeDto> whatsappCharge(String clientId) {
+    return ApiClient.get<WhatsappChargeDto>(
+      ApiRoutes.clientWhatsappCharge(clientId),
+      fromJson: WhatsappChargeDto.fromJson,
     );
   }
 }
