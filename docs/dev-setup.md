@@ -233,8 +233,8 @@ Depois das migrations, crie o primeiro usuario administrativo:
 ```powershell
 $env:DATABASE_URL="postgres://postgres:postgres@localhost:5432/jimeri?sslmode=disable"
 $env:ADMIN_NAME="Admin"
-$env:ADMIN_EMAIL="admin@jimeri.local"
-$env:ADMIN_PASSWORD="admin123456"
+$env:ADMIN_EMAIL="admin@"
+$env:ADMIN_PASSWORD="123456"
 go run ./cmd/seed-admin
 ```
 

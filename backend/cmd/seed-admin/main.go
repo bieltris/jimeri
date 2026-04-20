@@ -10,11 +10,16 @@ import (
 	"github.com/bieltris/jimeri/backend/internal/config"
 	"github.com/bieltris/jimeri/backend/internal/database"
 	"github.com/bieltris/jimeri/backend/internal/db"
+	"github.com/bieltris/jimeri/backend/internal/envfile"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
+	if err := envfile.Load(".env"); err != nil {
+		log.Fatalf("load .env: %v", err)
+	}
+
 	cfg := config.Load()
 
 	name := env("ADMIN_NAME", "Admin")

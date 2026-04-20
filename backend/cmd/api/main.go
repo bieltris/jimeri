@@ -11,10 +11,15 @@ import (
 
 	"github.com/bieltris/jimeri/backend/internal/config"
 	"github.com/bieltris/jimeri/backend/internal/database"
+	"github.com/bieltris/jimeri/backend/internal/envfile"
 	httpserver "github.com/bieltris/jimeri/backend/internal/http"
 )
 
 func main() {
+	if err := envfile.Load(".env"); err != nil {
+		log.Fatalf("load .env: %v", err)
+	}
+
 	cfg := config.Load()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
