@@ -170,3 +170,25 @@ Se algum passo falhar, olhe primeiro os logs do service no Render.
 - O arquivo `backend/.env.production.example` e apenas modelo.
 - O refresh token usa cookie seguro em producao, entao precisa de HTTPS.
 - Cloudflare Pages e Render entregam HTTPS por padrao.
+
+## 11. Automatizar Deploy
+
+Depois que a beta manual estiver funcionando, o repo usa GitHub Actions para automatizar:
+
+- `Backend CI`: roda `go test ./...` quando mudar o backend.
+- `Deploy Frontend`: builda Flutter Web e publica no Cloudflare Pages quando mudar o frontend na `main`.
+
+Configure estes secrets no GitHub, em `Settings > Secrets and variables > Actions`:
+
+```text
+API_BASE_URL=https://jimeri.onrender.com/api
+CLOUDFLARE_ACCOUNT_ID=seu-account-id
+CLOUDFLARE_API_TOKEN=token-do-cloudflare
+```
+
+O token do Cloudflare precisa permitir deploy no Pages.
+
+O backend no Render pode ficar com auto deploy ligado para a branch `main`. Assim, quando fizer push:
+
+- Mudou backend: Render redespluga a API.
+- Mudou frontend: GitHub Actions builda e publica no Cloudflare.
