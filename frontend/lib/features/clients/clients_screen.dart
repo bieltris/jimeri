@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/shared/admin_page.dart';
 import '../../core/shared/app_snackbar.dart';
+import '../../core/shared/page_feedback.dart';
 import '../../core/platform/open_external_url.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/money.dart';
@@ -33,6 +34,18 @@ class ClientsScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (state.error != null) ...[
+            PageFeedbackCard(
+              title: 'Falha ao carregar clientes',
+              message: state.error!,
+              tone: PageFeedbackTone.error,
+              actionLabel: 'Tentar novamente',
+              onAction: state.isLoading
+                  ? null
+                  : ref.read(clientsProvider.notifier).loadClients,
+            ),
+            const SizedBox(height: 16),
+          ],
           _ClientFilters(state: state),
           const SizedBox(height: 20),
           if (state.isLoading)
@@ -43,10 +56,11 @@ class ClientsScreen extends ConsumerWidget {
               ),
             )
           else if (clients.isEmpty)
-            const _EmptyClients()
+            _EmptyClients(state: state)
           else
             _ClientsList(
               clients: clients,
+              isBusy: state.isSaving || state.isLoading,
               onEdit: (client) => _openForm(context, ref, client),
               onToggleStatus: (client) => _toggleStatus(context, ref, client),
               onCharge: (client) => _chargeClient(context, client),
@@ -229,6 +243,7 @@ class _ClientFilters extends ConsumerWidget {
 class _ClientsList extends StatelessWidget {
   const _ClientsList({
     required this.clients,
+    required this.isBusy,
     required this.onEdit,
     required this.onToggleStatus,
     required this.onCharge,
@@ -236,6 +251,7 @@ class _ClientsList extends StatelessWidget {
   });
 
   final List<ClientWithBalanceDto> clients;
+  final bool isBusy;
   final ValueChanged<ClientWithBalanceDto> onEdit;
   final ValueChanged<ClientWithBalanceDto> onToggleStatus;
   final ValueChanged<ClientWithBalanceDto> onCharge;
@@ -306,25 +322,25 @@ class _ClientsList extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   OutlinedButton(
-                    onPressed: () => onEdit(item),
+                    onPressed: isBusy ? null : () => onEdit(item),
                     child: const Text('Editar'),
                   ),
                   if (hasDebt)
                     FilledButton.icon(
-                      onPressed: () => onPayment(item),
+                      onPressed: isBusy ? null : () => onPayment(item),
                       icon: const Icon(Icons.payments_outlined),
                       label: const Text('Pagar'),
                     ),
                   if (hasDebt)
                     OutlinedButton.icon(
-                      onPressed: _hasWhatsapp(client.responsibleWhatsapp)
+                      onPressed: !isBusy && _hasWhatsapp(client.responsibleWhatsapp)
                           ? () => onCharge(item)
                           : null,
                       icon: const Icon(Icons.chat_outlined),
                       label: const Text('Cobrar'),
                     ),
                   TextButton(
-                    onPressed: () => onToggleStatus(item),
+                    onPressed: isBusy ? null : () => onToggleStatus(item),
                     child: Text(client.active ? 'Desativar' : 'Ativar'),
                   ),
                 ],
@@ -371,14 +387,24 @@ bool _hasWhatsapp(String? value) {
 }
 
 class _EmptyClients extends StatelessWidget {
-  const _EmptyClients();
+  const _EmptyClients({
+    required this.state,
+  });
+
+  final ClientsState state;
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(32),
-        child: Text('Nenhum cliente encontrado.'),
+    final isFiltering =
+        state.search.trim().isNotEmpty || state.filter != ClientsFilter.active;
+
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: PageFeedbackCard(
+        title: isFiltering ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado',
+        message: isFiltering
+            ? 'Ajuste a busca ou o filtro para encontrar um cliente.'
+            : 'Cadastre o primeiro cliente para comecar a acompanhar as dividas.',
       ),
     );
   }

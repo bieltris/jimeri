@@ -97,6 +97,17 @@ class PaymentsController extends Notifier<PaymentsState> {
     }
   }
 
+  Future<void> reloadSelectedClient() async {
+    final clientId = state.selectedClientId;
+    if (clientId == null || clientId.isEmpty) {
+      await loadClients();
+      return;
+    }
+
+    await loadClients();
+    await selectClient(clientId);
+  }
+
   Future<void> selectClient(String? clientId) async {
     if (clientId == null || clientId.isEmpty) {
       state = state.copyWith(

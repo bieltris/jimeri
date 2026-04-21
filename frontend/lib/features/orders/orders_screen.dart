@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/shared/admin_page.dart';
 import '../../core/shared/app_snackbar.dart';
+import '../../core/shared/page_feedback.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/money.dart';
 import '../../dtos/client_with_balance_dto.dart';
@@ -21,8 +22,9 @@ class OrdersScreen extends ConsumerWidget {
       description: 'Monte a compra rapido e finalize sem sair da tela.',
       action: IconButton.filledTonal(
         tooltip: 'Atualizar dados',
-        onPressed:
-            state.isLoading ? null : ref.read(ordersProvider.notifier).loadData,
+        onPressed: state.isLoading || state.isSaving
+            ? null
+            : ref.read(ordersProvider.notifier).loadData,
         icon: const Icon(Icons.refresh),
       ),
       floatingOverlay: _MobileCartOverlay(state: state),
@@ -30,7 +32,24 @@ class OrdersScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (state.error != null) ...[
-            _WarningBar(message: state.error!),
+            PageFeedbackCard(
+              title: 'Falha ao preparar o pedido',
+              message: state.error!,
+              tone: PageFeedbackTone.error,
+              actionLabel: 'Atualizar',
+              onAction: state.isLoading || state.isSaving
+                  ? null
+                  : ref.read(ordersProvider.notifier).loadData,
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (state.lastOrder != null) ...[
+            PageFeedbackCard(
+              title: 'Ultimo pedido lancado',
+              message:
+                  '${state.lastOrderClientName} - ${formatCents(state.lastOrder!.totalCents)}',
+              tone: PageFeedbackTone.success,
+            ),
             const SizedBox(height: 16),
           ],
           if (state.isLoading)
@@ -237,6 +256,7 @@ class _SaleBoard extends ConsumerWidget {
         _ClientPicker(state: state),
         const SizedBox(height: 20),
         TextField(
+          enabled: !state.isSaving,
           onChanged: ref.read(ordersProvider.notifier).setProductSearch,
           decoration: const InputDecoration(
             labelText: 'Buscar produto',
@@ -291,6 +311,7 @@ class _ClientPicker extends ConsumerWidget {
               final isWide = constraints.maxWidth >= 620;
 
               final search = TextField(
+                enabled: !state.isSaving,
                 onChanged: ref.read(ordersProvider.notifier).setClientSearch,
                 decoration: const InputDecoration(
                   labelText: 'Buscar por aluno, mae ou WhatsApp',
@@ -313,7 +334,9 @@ class _ClientPicker extends ConsumerWidget {
                     ),
                   );
                 }).toList(),
-                onChanged: ref.read(ordersProvider.notifier).selectClient,
+                onChanged: state.isSaving
+                    ? null
+                    : ref.read(ordersProvider.notifier).selectClient,
               );
 
               if (!isWide) {
@@ -401,6 +424,8 @@ class _ProductsGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isSaving = ref.watch(ordersProvider.select((state) => state.isSaving));
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -430,6 +455,7 @@ class _ProductsGrid extends ConsumerWidget {
                   (state) => state.quantityForProduct(product.id),
                 ),
               ),
+              disabled: isSaving,
               onRemove: () => ref
                   .read(ordersProvider.notifier)
                   .decrementProduct(product.id),
@@ -446,12 +472,14 @@ class _ProductButton extends StatelessWidget {
   const _ProductButton({
     required this.product,
     required this.quantity,
+    required this.disabled,
     required this.onRemove,
     required this.onAdd,
   });
 
   final ProductModel product;
   final int quantity;
+  final bool disabled;
   final VoidCallback onRemove;
   final VoidCallback onAdd;
 
@@ -539,7 +567,7 @@ class _ProductButton extends StatelessWidget {
                     icon: Icons.remove,
                     label: 'Remover',
                     backgroundColor: AppColors.error,
-                    onPressed: hasQuantity ? onRemove : null,
+                    onPressed: hasQuantity && !disabled ? onRemove : null,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -548,7 +576,7 @@ class _ProductButton extends StatelessWidget {
                     icon: Icons.add,
                     label: 'Adicionar',
                     backgroundColor: AppColors.accent,
-                    onPressed: onAdd,
+                    onPressed: disabled ? null : onAdd,
                   ),
                 ),
               ],
@@ -647,6 +675,7 @@ class _CartPanel extends ConsumerWidget {
             ...state.cart.map((item) => _CartItemRow(item: item)),
             const Divider(height: 24),
             TextField(
+              enabled: !state.isSaving,
               minLines: 2,
               maxLines: 3,
               onChanged: ref.read(ordersProvider.notifier).setNote,
@@ -720,6 +749,8 @@ class _CartItemRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isSaving = ref.watch(ordersProvider.select((state) => state.isSaving));
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -742,9 +773,11 @@ class _CartItemRow extends ConsumerWidget {
           _QuantityButton(
             icon: Icons.remove,
             backgroundColor: AppColors.error,
-            onPressed: () => ref
-                .read(ordersProvider.notifier)
-                .decrementProduct(item.product.id),
+            onPressed: isSaving
+                ? null
+                : () => ref
+                    .read(ordersProvider.notifier)
+                    .decrementProduct(item.product.id),
           ),
           SizedBox(
             width: 34,
@@ -757,9 +790,11 @@ class _CartItemRow extends ConsumerWidget {
           _QuantityButton(
             icon: Icons.add,
             backgroundColor: AppColors.accent,
-            onPressed: () => ref
-                .read(ordersProvider.notifier)
-                .addProduct(item.product),
+            onPressed: isSaving
+                ? null
+                : () => ref
+                    .read(ordersProvider.notifier)
+                    .addProduct(item.product),
           ),
         ],
       ),
@@ -776,7 +811,7 @@ class _QuantityButton extends StatelessWidget {
 
   final IconData icon;
   final Color backgroundColor;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -788,6 +823,8 @@ class _QuantityButton extends StatelessWidget {
         style: IconButton.styleFrom(
           backgroundColor: backgroundColor,
           foregroundColor: Colors.white,
+          disabledBackgroundColor: backgroundColor.withOpacity(0.28),
+          disabledForegroundColor: Colors.white70,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -856,33 +893,6 @@ class _EmptyCart extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _WarningBar extends StatelessWidget {
-  const _WarningBar({
-    required this.message,
-  });
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: _softWarningColor(context),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        message,
-        style: TextStyle(
-          color: _warningTextColor(context),
-          fontWeight: FontWeight.w700,
-        ),
       ),
     );
   }

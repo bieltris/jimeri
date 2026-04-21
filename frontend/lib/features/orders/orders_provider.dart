@@ -53,6 +53,21 @@ class OrdersState {
     return null;
   }
 
+  String get lastOrderClientName {
+    final order = lastOrder;
+    if (order == null) {
+      return 'Cliente';
+    }
+
+    for (final client in clients) {
+      if (client.client.id == order.order.clientId) {
+        return client.client.name;
+      }
+    }
+
+    return 'Cliente';
+  }
+
   List<ClientWithBalanceDto> get visibleClients {
     final search = clientSearch.trim().toLowerCase();
     return clients.where((item) {
