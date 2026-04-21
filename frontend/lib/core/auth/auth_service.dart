@@ -6,11 +6,17 @@ import '../api/api_exception.dart';
 import '../api/api_routes.dart';
 import '../../dtos/auth_response_dto.dart';
 import '../../models/user_model.dart';
+import 'refresh_token_store.dart';
 
 class AuthService extends ChangeNotifier implements ApiAuthDelegate {
+  AuthService({
+    RefreshTokenStore? refreshTokenStore,
+  }) : _refreshTokenStore = refreshTokenStore ?? createRefreshTokenStore();
+
   String? _accessToken;
   UserModel? _currentUser;
   bool _isCheckingSession = false;
+  final RefreshTokenStore _refreshTokenStore;
 
   UserModel? get currentUser => _currentUser;
 
@@ -34,7 +40,7 @@ class AuthService extends ChangeNotifier implements ApiAuthDelegate {
       fromJson: AuthResponseDto.fromJson,
     );
 
-    _setSession(response);
+    await _persistSession(response);
 
     return response.user;
   }
@@ -47,17 +53,22 @@ class AuthService extends ChangeNotifier implements ApiAuthDelegate {
     _setCheckingSession(true);
 
     try {
+      final refreshToken = await _refreshTokenStore.read();
       final response = await ApiClient.post<AuthResponseDto>(
         ApiRoutes.refresh(),
+        body: refreshToken == null
+            ? null
+            : {
+                'refreshToken': refreshToken,
+              },
         fromJson: AuthResponseDto.fromJson,
       );
 
-      _accessToken = response.accessToken;
-      _currentUser = response.user;
+      await _persistSession(response);
 
       return true;
     } on ApiException {
-      _clearSession(notify: false);
+      await _clearSession(notify: false);
 
       return false;
     } finally {
@@ -80,16 +91,22 @@ class AuthService extends ChangeNotifier implements ApiAuthDelegate {
   @override
   Future<String?> refreshAccessToken() async {
     try {
+      final refreshToken = await _refreshTokenStore.read();
       final response = await ApiClient.post<AuthResponseDto>(
         ApiRoutes.refresh(),
+        body: refreshToken == null
+            ? null
+            : {
+                'refreshToken': refreshToken,
+              },
         fromJson: AuthResponseDto.fromJson,
       );
 
-      _setSession(response);
+      await _persistSession(response);
 
       return response.accessToken;
     } on ApiException {
-      _clearSession();
+      await _clearSession();
 
       return null;
     }
@@ -98,11 +115,19 @@ class AuthService extends ChangeNotifier implements ApiAuthDelegate {
   @override
   Future<void> logout() async {
     try {
-      await ApiClient.post<void>(ApiRoutes.logout());
+      final refreshToken = await _refreshTokenStore.read();
+      await ApiClient.post<void>(
+        ApiRoutes.logout(),
+        body: refreshToken == null
+            ? null
+            : {
+                'refreshToken': refreshToken,
+              },
+      );
     } on ApiException {
       // A sessao local precisa cair mesmo se o backend nao responder.
     } finally {
-      _clearSession();
+      await _clearSession();
     }
   }
 
@@ -113,13 +138,19 @@ class AuthService extends ChangeNotifier implements ApiAuthDelegate {
         uri.path.endsWith('/auth/logout');
   }
 
+  Future<void> _persistSession(AuthResponseDto response) async {
+    await _refreshTokenStore.write(response.refreshToken);
+    _setSession(response);
+  }
+
   void _setSession(AuthResponseDto response) {
     _accessToken = response.accessToken;
     _currentUser = response.user;
     notifyListeners();
   }
 
-  void _clearSession({bool notify = true}) {
+  Future<void> _clearSession({bool notify = true}) async {
+    await _refreshTokenStore.clear();
     _accessToken = null;
     _currentUser = null;
 

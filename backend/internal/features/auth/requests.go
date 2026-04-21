@@ -2,6 +2,8 @@ package auth
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"strings"
 
@@ -11,6 +13,10 @@ import (
 type loginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type refreshRequest struct {
+	RefreshToken string `json:"refreshToken"`
 }
 
 func parseLoginRequest(w http.ResponseWriter, r *http.Request) (loginRequest, bool) {
@@ -27,4 +33,24 @@ func parseLoginRequest(w http.ResponseWriter, r *http.Request) (loginRequest, bo
 	}
 
 	return input, true
+}
+
+func parseRefreshRequest(r *http.Request) (refreshRequest, error) {
+	var input refreshRequest
+	if r.Body == nil {
+		return input, nil
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			return refreshRequest{}, nil
+		}
+
+		return refreshRequest{}, err
+	}
+
+	input.RefreshToken = strings.TrimSpace(input.RefreshToken)
+
+	return input, nil
 }

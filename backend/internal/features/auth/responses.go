@@ -6,8 +6,9 @@ import (
 )
 
 type authResponse struct {
-	AccessToken string       `json:"accessToken"`
-	User        userResponse `json:"user"`
+	AccessToken  string       `json:"accessToken"`
+	RefreshToken string       `json:"refreshToken"`
+	User         userResponse `json:"user"`
 }
 
 type userResponse struct {

@@ -35,7 +35,8 @@ func (h *Handler) createSession(ctx context.Context, q sessionCreator, user db.U
 	}
 
 	return authResponse{
-		AccessToken: accessToken,
-		User:        toUserResponse(user),
+		AccessToken:  accessToken,
+		RefreshToken: rawRefreshToken,
+		User:         toUserResponse(user),
 	}, rawRefreshToken, nil
 }

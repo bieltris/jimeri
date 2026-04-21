@@ -3,6 +3,7 @@ package auth
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	authcore "github.com/bieltris/jimeri/backend/internal/auth"
@@ -39,13 +40,13 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie(h.refreshCookieName)
-	if err != nil || cookie.Value == "" {
+	rawRefreshToken, ok := h.refreshTokenFromRequest(r)
+	if !ok {
 		respond.Error(w, http.StatusUnauthorized, "missing refresh token")
 		return
 	}
 
-	tokenHash := authcore.HashRefreshToken(cookie.Value)
+	tokenHash := authcore.HashRefreshToken(rawRefreshToken)
 	currentToken, err := h.queries.GetRefreshTokenByHash(r.Context(), tokenHash)
 	if err != nil {
 		h.clearRefreshCookie(w)
@@ -95,9 +96,8 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie(h.refreshCookieName)
-	if err == nil && cookie.Value != "" {
-		tokenHash := authcore.HashRefreshToken(cookie.Value)
+	if rawRefreshToken, ok := h.refreshTokenFromRequest(r); ok {
+		tokenHash := authcore.HashRefreshToken(rawRefreshToken)
 		refreshToken, err := h.queries.GetRefreshTokenByHash(r.Context(), tokenHash)
 		if err == nil && !refreshToken.RevokedAt.Valid {
 			_, _ = h.queries.RevokeRefreshToken(r.Context(), refreshToken.ID)
@@ -106,6 +106,27 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 
 	h.clearRefreshCookie(w)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handler) refreshTokenFromRequest(r *http.Request) (string, bool) {
+	cookie, err := r.Cookie(h.refreshCookieName)
+	if err == nil {
+		value := strings.TrimSpace(cookie.Value)
+		if value != "" {
+			return value, true
+		}
+	}
+
+	input, err := parseRefreshRequest(r)
+	if err != nil {
+		return "", false
+	}
+
+	if input.RefreshToken == "" {
+		return "", false
+	}
+
+	return input.RefreshToken, true
 }
 
 func (h *Handler) me(w http.ResponseWriter, r *http.Request) {
