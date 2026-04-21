@@ -1,5 +1,4 @@
 import 'dart:html' as html;
-import 'dart:js_util' as js_util;
 
 import 'pwa_install_controller.dart';
 
@@ -36,14 +35,12 @@ class _WebPwaInstallController extends PwaInstallController {
     }
 
     if (_deferredPrompt != null) {
-      final promptEvent = _deferredPrompt!;
-      js_util.callMethod(promptEvent, 'prompt', []);
+      final promptEvent = _deferredPrompt as dynamic;
+      promptEvent.prompt();
 
-      final choice = await js_util.promiseToFuture<Object?>(
-        js_util.getProperty(promptEvent, 'userChoice'),
-      );
+      final choice = await (promptEvent.userChoice as Future<Object?>);
 
-      final outcome = js_util.getProperty(choice as Object, 'outcome') as String?;
+      final outcome = (choice as dynamic).outcome as String?;
       _deferredPrompt = null;
       notifyListeners();
 
@@ -70,7 +67,7 @@ class _WebPwaInstallController extends PwaInstallController {
   }
 
   void _handleBeforeInstallPrompt(html.Event event) {
-    js_util.callMethod(event, 'preventDefault', []);
+    (event as dynamic).preventDefault();
     _deferredPrompt = event;
     notifyListeners();
   }
@@ -83,8 +80,7 @@ class _WebPwaInstallController extends PwaInstallController {
 
   bool _computeStandalone() {
     final displayModeStandalone = html.window.matchMedia('(display-mode: standalone)').matches;
-    final navigatorStandalone =
-        js_util.getProperty<Object?>(html.window.navigator, 'standalone') == true;
+    final navigatorStandalone = (html.window.navigator as dynamic).standalone == true;
 
     return displayModeStandalone || navigatorStandalone;
   }
