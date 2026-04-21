@@ -39,6 +39,7 @@ class ResponsiveDialog extends StatelessWidget {
         child: SizedBox(
           height: dialogHeight,
           child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
