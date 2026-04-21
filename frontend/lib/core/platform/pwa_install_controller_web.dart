@@ -8,19 +8,30 @@ PwaInstallController createPwaInstallController() {
 
 class _WebPwaInstallController extends PwaInstallController {
   _WebPwaInstallController() {
-    _isInstalled = _computeStandalone();
-    _needsIosInstructions = _computeIosSafari();
+    try {
+      _isInstalled = _computeStandalone();
+      _needsIosInstructions = _computeIosSafari();
 
-    html.window.addEventListener('beforeinstallprompt', _handleBeforeInstallPrompt);
-    html.window.addEventListener('appinstalled', _handleAppInstalled);
+      html.window.addEventListener(
+        'beforeinstallprompt',
+        _handleBeforeInstallPrompt,
+      );
+      html.window.addEventListener('appinstalled', _handleAppInstalled);
+    } catch (_) {
+      _initFailed = true;
+      _isInstalled = false;
+      _needsIosInstructions = false;
+    }
   }
 
   Object? _deferredPrompt;
+  bool _initFailed = false;
   late bool _isInstalled;
   late bool _needsIosInstructions;
 
   @override
-  bool get isAvailable => !_isInstalled && (_deferredPrompt != null || _needsIosInstructions);
+  bool get isAvailable =>
+      !_initFailed && !_isInstalled && (_deferredPrompt != null || _needsIosInstructions);
 
   @override
   bool get isInstalled => _isInstalled;
@@ -30,23 +41,33 @@ class _WebPwaInstallController extends PwaInstallController {
 
   @override
   Future<PwaInstallOutcome> install() async {
+    if (_initFailed) {
+      return PwaInstallOutcome.unavailable;
+    }
+
     if (_isInstalled) {
       return PwaInstallOutcome.alreadyInstalled;
     }
 
     if (_deferredPrompt != null) {
-      final promptEvent = _deferredPrompt as dynamic;
-      promptEvent.prompt();
+      try {
+        final promptEvent = _deferredPrompt as dynamic;
+        promptEvent.prompt();
 
-      final choice = await (promptEvent.userChoice as Future<Object?>);
+        final choice = await (promptEvent.userChoice as Future<Object?>);
 
-      final outcome = (choice as dynamic).outcome as String?;
-      _deferredPrompt = null;
-      notifyListeners();
+        final outcome = (choice as dynamic).outcome as String?;
+        _deferredPrompt = null;
+        notifyListeners();
 
-      return outcome == 'accepted'
-          ? PwaInstallOutcome.installed
-          : PwaInstallOutcome.dismissed;
+        return outcome == 'accepted'
+            ? PwaInstallOutcome.installed
+            : PwaInstallOutcome.dismissed;
+      } catch (_) {
+        _deferredPrompt = null;
+        notifyListeners();
+        return PwaInstallOutcome.unavailable;
+      }
     }
 
     if (_needsIosInstructions) {
@@ -58,18 +79,24 @@ class _WebPwaInstallController extends PwaInstallController {
 
   @override
   void dispose() {
-    html.window.removeEventListener(
-      'beforeinstallprompt',
-      _handleBeforeInstallPrompt,
-    );
-    html.window.removeEventListener('appinstalled', _handleAppInstalled);
+    if (!_initFailed) {
+      html.window.removeEventListener(
+        'beforeinstallprompt',
+        _handleBeforeInstallPrompt,
+      );
+      html.window.removeEventListener('appinstalled', _handleAppInstalled);
+    }
     super.dispose();
   }
 
   void _handleBeforeInstallPrompt(html.Event event) {
-    (event as dynamic).preventDefault();
-    _deferredPrompt = event;
-    notifyListeners();
+    try {
+      (event as dynamic).preventDefault();
+      _deferredPrompt = event;
+      notifyListeners();
+    } catch (_) {
+      _deferredPrompt = null;
+    }
   }
 
   void _handleAppInstalled(html.Event event) {
@@ -80,7 +107,7 @@ class _WebPwaInstallController extends PwaInstallController {
 
   bool _computeStandalone() {
     final displayModeStandalone = html.window.matchMedia('(display-mode: standalone)').matches;
-    final navigatorStandalone = (html.window.navigator as dynamic).standalone == true;
+    final navigatorStandalone = _navigatorStandalone();
 
     return displayModeStandalone || navigatorStandalone;
   }
@@ -96,5 +123,14 @@ class _WebPwaInstallController extends PwaInstallController {
         !userAgent.contains('edgios');
 
     return isIos && isSafari && !_computeStandalone();
+  }
+
+  bool _navigatorStandalone() {
+    try {
+      final standalone = (html.window.navigator as dynamic).standalone;
+      return standalone == true;
+    } catch (_) {
+      return false;
+    }
   }
 }
