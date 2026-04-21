@@ -3,12 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api_client.dart';
 import 'auth_service.dart';
 
-final authServiceProvider = Provider<AuthService>((ref) {
+final authServiceProvider = ChangeNotifierProvider<AuthService>((ref) {
   final authService = AuthService();
 
   configureApiClient(auth: authService);
   Future.microtask(authService.tryAutoLogin);
-  ref.onDispose(authService.dispose);
 
   return authService;
 });

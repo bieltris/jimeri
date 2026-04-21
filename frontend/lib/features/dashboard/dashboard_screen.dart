@@ -138,7 +138,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           crossAxisCount: columns,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
-                          childAspectRatio: columns == 1 ? 4.2 : 2.4,
+                          mainAxisExtent: columns == 1 ? 96 : 104,
                         ),
                         itemBuilder: (context, index) {
                           return _DashboardButton(action: actions[index]);
@@ -189,7 +189,7 @@ class _DashboardSummary extends StatelessWidget {
             crossAxisCount: columns,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: columns == 1 ? 4.4 : 2.1,
+            mainAxisExtent: columns == 1 ? 92 : 112,
           ),
           children: [
             _SummaryCard(

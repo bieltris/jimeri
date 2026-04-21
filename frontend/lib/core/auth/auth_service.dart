@@ -15,7 +15,7 @@ class AuthService extends ChangeNotifier implements ApiAuthDelegate {
 
   String? _accessToken;
   UserModel? _currentUser;
-  bool _isCheckingSession = false;
+  bool _isCheckingSession = true;
   final RefreshTokenStore _refreshTokenStore;
 
   UserModel? get currentUser => _currentUser;
@@ -47,6 +47,7 @@ class AuthService extends ChangeNotifier implements ApiAuthDelegate {
 
   Future<bool> tryAutoLogin() async {
     if (isAuthenticated) {
+      _setCheckingSession(false);
       return true;
     }
 
