@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/shared/page_feedback.dart';
+import '../../core/shared/responsive_dialog.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/money.dart';
 import '../../dtos/client_with_balance_dto.dart';
 import '../../services/clients_service.dart';
 
-final dashboardClientsProvider = FutureProvider<List<ClientWithBalanceDto>>((ref) {
+final dashboardClientsProvider =
+    FutureProvider<List<ClientWithBalanceDto>>((ref) {
   return ClientsService().list();
 });
 
@@ -30,16 +32,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final clientsAsync = ref.watch(dashboardClientsProvider);
     final clients = clientsAsync.value ?? const <ClientWithBalanceDto>[];
+    final debtors = clients
+        .where((item) => item.balanceCents > 0)
+        .toList()
+      ..sort((left, right) => right.balanceCents.compareTo(left.balanceCents));
     final totalDebtCents = clients.fold<int>(
       0,
       (total, item) => total + (item.balanceCents > 0 ? item.balanceCents : 0),
     );
-    final clientsWithDebt = clients.where(
-      (item) => item.balanceCents > 0,
-    ).length;
-    final activeClients = clients.where(
-      (item) => item.client.active,
-    ).length;
+    final clientsWithDebt = clients
+        .where(
+          (item) => item.balanceCents > 0,
+        )
+        .length;
+    final activeClients = clients
+        .where(
+          (item) => item.client.active,
+        )
+        .length;
 
     final actions = [
       const _DashboardAction(
@@ -116,9 +126,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   const SizedBox(height: 32),
                   _DashboardSummary(
                     isLoading: clientsAsync.isLoading,
+                    debtors: debtors,
                     totalDebtCents: totalDebtCents,
                     clientsWithDebt: clientsWithDebt,
                     activeClients: activeClients,
+                    onOpenDebtors: debtors.isEmpty
+                        ? null
+                        : () => _showDebtorsDialog(
+                              context,
+                              debtors: debtors,
+                              totalDebtCents: totalDebtCents,
+                            ),
                   ),
                   const SizedBox(height: 32),
                   Text(
@@ -154,20 +172,101 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ),
     );
   }
+
+  Future<void> _showDebtorsDialog(
+    BuildContext context, {
+    required List<ClientWithBalanceDto> debtors,
+    required int totalDebtCents,
+  }) {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return ResponsiveDialog(
+          maxWidth: 520,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Dividas em aberto',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${debtors.length} ${debtors.length == 1 ? 'cliente devendo' : 'clientes devendo'}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+          actions: const [],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                height: 6,
+                decoration: BoxDecoration(
+                  color: AppColors.warning,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  border: Border.all(color: AppColors.neutral300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Total em aberto',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    Text(
+                      formatCents(totalDebtCents),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...debtors.map(
+                (debtor) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _DebtorTile(item: debtor),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _DashboardSummary extends StatelessWidget {
   const _DashboardSummary({
     required this.isLoading,
+    required this.debtors,
     required this.totalDebtCents,
     required this.clientsWithDebt,
     required this.activeClients,
+    required this.onOpenDebtors,
   });
 
   final bool isLoading;
+  final List<ClientWithBalanceDto> debtors;
   final int totalDebtCents;
   final int clientsWithDebt;
   final int activeClients;
+  final VoidCallback? onOpenDebtors;
 
   @override
   Widget build(BuildContext context) {
@@ -196,6 +295,7 @@ class _DashboardSummary extends StatelessWidget {
               title: 'Total em aberto',
               value: formatCents(totalDebtCents),
               color: totalDebtCents > 0 ? AppColors.error : AppColors.accent,
+              onPressed: onOpenDebtors,
             ),
             _SummaryCard(
               title: 'Clientes devendo',
@@ -219,53 +319,87 @@ class _SummaryCard extends StatelessWidget {
     required this.title,
     required this.value,
     required this.color,
+    this.onPressed,
   });
 
   final String title;
   final String value;
   final Color color;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final content = Padding(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border.all(color: AppColors.neutral300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
         children: [
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w900,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
+                const SizedBox(height: 6),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w900,
+                      ),
+                ),
+              ],
+            ),
           ),
+          if (onPressed != null) ...[
+            const SizedBox(width: 12),
+            Icon(Icons.arrow_forward_rounded, color: color),
+          ],
         ],
+      ),
+    );
+
+    if (onPressed == null) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border.all(color: AppColors.neutral300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: content,
+      );
+    }
+
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Ink(
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.neutral300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: content,
+        ),
       ),
     );
   }
 }
 
 class _DashboardButton extends StatelessWidget {
+  final _DashboardAction action;
+
   const _DashboardButton({
     required this.action,
   });
-
-  final _DashboardAction action;
 
   @override
   Widget build(BuildContext context) {
@@ -280,7 +414,11 @@ class _DashboardButton extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(action.icon, color: AppColors.primary),
+          Icon(
+            action.icon,
+            color: AppColors.primary,
+            size: 22,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -304,6 +442,48 @@ class _DashboardButton extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DebtorTile extends StatelessWidget {
+  const _DebtorTile({
+    required this.item,
+  });
+
+  final ClientWithBalanceDto item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border.all(color: AppColors.neutral300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              item.client.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            formatCents(item.balanceCents),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.error,
+                  fontWeight: FontWeight.w800,
+                ),
           ),
         ],
       ),
