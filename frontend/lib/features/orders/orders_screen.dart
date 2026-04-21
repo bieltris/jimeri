@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jimeri_frontend/core/shared/create_new_client.dart';
 
 import '../../core/shared/admin_page.dart';
 import '../../core/shared/app_snackbar.dart';
@@ -294,12 +295,14 @@ class _ClientPicker extends ConsumerStatefulWidget {
 }
 
 class _ClientPickerState extends ConsumerState<_ClientPicker> {
+  final _pickerKey = GlobalKey();
   final _searchController = TextEditingController();
   final _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
+    _focusNode.addListener(_handleFocusChange);
     _syncSelectedClientName();
   }
 
@@ -316,6 +319,7 @@ class _ClientPickerState extends ConsumerState<_ClientPicker> {
 
   @override
   void dispose() {
+    _focusNode.removeListener(_handleFocusChange);
     _searchController.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -326,6 +330,7 @@ class _ClientPickerState extends ConsumerState<_ClientPicker> {
     final selectedClient = widget.state.selectedClient;
 
     return Container(
+      key: _pickerKey,
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -336,9 +341,19 @@ class _ClientPickerState extends ConsumerState<_ClientPicker> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Cliente',
-            style: Theme.of(context).textTheme.titleLarge,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Cliente',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              TextButton.icon(
+                onPressed: () => CreateNewClient.openFormCreateNewClient(context, ref),
+                icon: const Icon(Icons.add),
+                label: const Text('Criar client'),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           RawAutocomplete<ClientWithBalanceDto>(
@@ -396,6 +411,13 @@ class _ClientPickerState extends ConsumerState<_ClientPicker> {
                   elevation: 8,
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(
+                      color: AppColors.primary,
+                      width: 1,
+                    ),
+                  ),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(
                       maxWidth: 640,
@@ -416,6 +438,7 @@ class _ClientPickerState extends ConsumerState<_ClientPicker> {
                             item.client.responsibleName ??
                                 item.client.responsibleWhatsapp ??
                                 'Sem responsavel informado',
+                                style:TextStyle(color: AppColors.neutral300MediumAlpha),
                           ),
                           onTap: () => onSelected(item),
                         );
@@ -448,6 +471,26 @@ class _ClientPickerState extends ConsumerState<_ClientPicker> {
       text: selected.client.name,
       selection: TextSelection.collapsed(offset: selected.client.name.length),
     );
+  }
+
+  void _handleFocusChange() {
+    if (!_focusNode.hasFocus) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _pickerKey.currentContext;
+      if (context == null || !mounted) {
+        return;
+      }
+
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        alignment: 0,
+      );
+    });
   }
 }
 

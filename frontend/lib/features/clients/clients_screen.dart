@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jimeri_frontend/core/shared/create_new_client.dart';
 
 import '../../core/shared/admin_page.dart';
-import '../../core/shared/adaptive_form_sheet.dart';
 import '../../core/shared/app_snackbar.dart';
 import '../../core/shared/page_feedback.dart';
 import '../../core/platform/open_external_url.dart';
@@ -14,7 +14,6 @@ import '../../services/payments_service.dart';
 import '../payments/payments_provider.dart';
 import '../payments/widgets/payment_form_dialog.dart';
 import 'clients_provider.dart';
-import 'widgets/client_form_dialog.dart';
 
 class ClientsScreen extends ConsumerStatefulWidget {
   const ClientsScreen({super.key});
@@ -40,7 +39,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
       description: 'Cadastre clientes e acompanhe as dividas.',
       onRefresh: _refreshPage,
       action: FilledButton.icon(
-        onPressed: state.isSaving ? null : () => _openForm(context, ref),
+        onPressed: state.isSaving ? null : () => CreateNewClient.openFormCreateNewClient(context, ref),
         icon: const Icon(Icons.add),
         label: const Text('Novo cliente'),
       ),
@@ -74,7 +73,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
             _ClientsList(
               clients: clients,
               isBusy: state.isSaving || state.isLoading,
-              onEdit: (client) => _openForm(context, ref, client),
+              onEdit: (client) => CreateNewClient.openFormCreateNewClient(context, ref, client),
               onToggleStatus: (client) => _toggleStatus(context, ref, client),
               onCharge: (client) => _chargeClient(context, client),
               onPayment: (client) => _openPaymentForm(context, ref, client),
@@ -86,39 +85,6 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
 
   Future<void> _refreshPage() {
     return ref.read(clientsProvider.notifier).loadClients();
-  }
-
-  Future<void> _openForm(
-    BuildContext context,
-    WidgetRef ref, [
-    ClientWithBalanceDto? client,
-  ]) async {
-    final input = await showAdaptiveFormSheet<ClientFormInput>(
-      context: context,
-      builder: (context) => ClientFormDialog(client: client),
-    );
-
-    if (input == null || !context.mounted) {
-      return;
-    }
-
-    final error = client == null
-        ? await ref.read(clientsProvider.notifier).createClient(input)
-        : await ref.read(clientsProvider.notifier).updateClient(client, input);
-
-    if (!context.mounted) {
-      return;
-    }
-
-    if (error != null) {
-      AppSnackBar.showError(error, context: context);
-      return;
-    }
-
-    AppSnackBar.showSuccess(
-      client == null ? 'Cliente criado.' : 'Cliente atualizado.',
-      context: context,
-    );
   }
 
   Future<void> _toggleStatus(
