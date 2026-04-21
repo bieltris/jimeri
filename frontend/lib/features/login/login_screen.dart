@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_providers.dart';
+import '../../core/platform/pwa_install_controller.dart';
 import '../../core/shared/app_snackbar.dart';
 import '../../core/theme/app_colors.dart';
 import 'login_provider.dart';
@@ -32,6 +33,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final loginState = ref.watch(loginProvider);
     final authService = ref.watch(authServiceProvider);
+    final pwaInstall = ref.watch(pwaInstallProvider);
 
     if (authService.isCheckingSession) {
       return const Scaffold(
@@ -44,6 +46,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     return Scaffold(
+      floatingActionButton: pwaInstall.isAvailable
+          ? FloatingActionButton.extended(
+              onPressed: loginState.isLoading ? null : _installApp,
+              icon: const Icon(Icons.download_for_offline_outlined),
+              label: const Text('Instalar app'),
+            )
+          : null,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -161,5 +170,73 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     AppSnackBar.showSuccess('Login realizado.', context: context);
     context.go('/dashboard');
+  }
+
+  Future<void> _installApp() async {
+    final controller = ref.read(pwaInstallProvider);
+    final outcome = await controller.install();
+
+    if (!mounted) {
+      return;
+    }
+
+    switch (outcome) {
+      case PwaInstallOutcome.installed:
+        AppSnackBar.showSuccess('Instalacao iniciada.', context: context);
+        break;
+      case PwaInstallOutcome.instructions:
+        await _showIosInstallInstructions();
+        break;
+      case PwaInstallOutcome.dismissed:
+        AppSnackBar.showError('Instalacao cancelada.', context: context);
+        break;
+      case PwaInstallOutcome.alreadyInstalled:
+        AppSnackBar.showSuccess('O app ja esta instalado.', context: context);
+        break;
+      case PwaInstallOutcome.unavailable:
+        AppSnackBar.showError(
+          'Instalacao indisponivel neste navegador agora.',
+          context: context,
+        );
+        break;
+    }
+  }
+
+  Future<void> _showIosInstallInstructions() {
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Instalar no iPhone',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 12),
+                const Text('1. Toque no botao de compartilhar do Safari.'),
+                const SizedBox(height: 8),
+                const Text('2. Escolha "Adicionar a Tela de Inicio".'),
+                const SizedBox(height: 8),
+                const Text('3. Confirme para abrir o Jimeri como app.'),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Entendi'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
