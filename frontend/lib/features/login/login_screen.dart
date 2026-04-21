@@ -66,12 +66,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                          'Jimeri',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w800,
-                          ),
+                      'Jimeri',
+                      textAlign: TextAlign.center,
+                      style:
+                          Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w800,
+                              ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -219,11 +220,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 12),
-                const Text('1. Toque no botao de compartilhar do Safari.'),
+                const Text('1. Toque no botao de três pontos do Safari.'),
                 const SizedBox(height: 8),
-                const Text('2. Escolha "Adicionar a Tela de Inicio".'),
+                const Text('2. Clique em "Compartilhar" e depois "Ver mais".'),
                 const SizedBox(height: 8),
-                const Text('3. Confirme para abrir o Jimeri como app.'),
+                const Text('3. Escolha "Adicionar a Tela de Inicio".'),
+                const SizedBox(height: 8),
+                const Text('4. Confirme para abrir o Jimeri como app.'),
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
