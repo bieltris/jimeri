@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jimeri_frontend/core/shared/create_new_client.dart';
+import 'package:jimeri_frontend/core/shared/client_form_flow.dart';
 
 import '../../core/shared/admin_page.dart';
 import '../../core/shared/app_snackbar.dart';
@@ -39,7 +39,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
       description: 'Cadastre clientes e acompanhe as dividas.',
       onRefresh: _refreshPage,
       action: FilledButton.icon(
-        onPressed: state.isSaving ? null : () => CreateNewClient.openFormCreateNewClient(context, ref),
+        onPressed: state.isSaving ? null : () => ClientFormFlow.open(context, ref),
         icon: const Icon(Icons.add),
         label: const Text('Novo cliente'),
       ),
@@ -73,7 +73,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
             _ClientsList(
               clients: clients,
               isBusy: state.isSaving || state.isLoading,
-              onEdit: (client) => CreateNewClient.openFormCreateNewClient(context, ref, client),
+              onEdit: (client) => ClientFormFlow.open(context, ref, client),
               onToggleStatus: (client) => _toggleStatus(context, ref, client),
               onCharge: (client) => _chargeClient(context, client),
               onPayment: (client) => _openPaymentForm(context, ref, client),

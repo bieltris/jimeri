@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jimeri_frontend/core/shared/create_new_client.dart';
+import 'package:jimeri_frontend/core/shared/client_form_flow.dart';
 
 import '../../core/shared/admin_page.dart';
 import '../../core/shared/app_snackbar.dart';
@@ -349,7 +349,7 @@ class _ClientPickerState extends ConsumerState<_ClientPicker> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               TextButton.icon(
-                onPressed: () => CreateNewClient.openFormCreateNewClient(context, ref),
+                onPressed: () => ClientFormFlow.open(context, ref),
                 icon: const Icon(Icons.add),
                 label: const Text('Criar client'),
               ),

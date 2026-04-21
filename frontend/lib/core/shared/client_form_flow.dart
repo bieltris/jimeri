@@ -6,11 +6,8 @@ import 'package:jimeri_frontend/dtos/client_with_balance_dto.dart';
 import 'package:jimeri_frontend/features/clients/clients_provider.dart';
 import 'package:jimeri_frontend/features/clients/widgets/client_form_dialog.dart';
 
-
-
-
-class CreateNewClient {
-  static Future<void> openFormCreateNewClient(
+class ClientFormFlow {
+  static Future<void> open(
     BuildContext context,
     WidgetRef ref, [
     ClientWithBalanceDto? client,
@@ -42,5 +39,4 @@ class CreateNewClient {
       context: context,
     );
   }
-
 }
