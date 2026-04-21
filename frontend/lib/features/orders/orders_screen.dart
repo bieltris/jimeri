@@ -31,6 +31,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     return AdminPage(
       title: 'Lancar pedido',
       description: 'Monte a compra rapido e finalize sem sair da tela.',
+      onRefresh: _refreshPage,
       floatingOverlay: _MobileCartOverlay(state: state),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,6 +94,10 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _refreshPage() {
+    return ref.read(ordersProvider.notifier).loadData();
   }
 }
 

@@ -34,6 +34,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     return AdminPage(
       title: 'Produtos',
       description: 'Gerencie os itens vendidos na cantina.',
+      onRefresh: _refreshPage,
       action: FilledButton.icon(
         onPressed: state.isSaving ? null : () => _openForm(context, ref),
         icon: const Icon(Icons.add),
@@ -76,6 +77,11 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _refreshPage() async {
+    await ref.read(productsProvider.notifier).loadProducts();
+    await ref.read(productsProvider.notifier).loadCategories();
   }
 
   Future<void> _openForm(

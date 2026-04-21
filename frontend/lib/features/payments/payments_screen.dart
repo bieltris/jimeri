@@ -33,6 +33,7 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
     return AdminPage(
       title: 'Pagamentos',
       description: 'Registre valores recebidos e acompanhe baixas por cliente.',
+      onRefresh: _refreshPage,
       action: FilledButton.icon(
         onPressed: selectedClient == null || state.isSaving || state.isLoading
             ? null
@@ -111,6 +112,10 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _refreshPage() {
+    return ref.read(paymentsProvider.notifier).reloadSelectedClient();
   }
 
   Future<void> _openPaymentForm(BuildContext context, WidgetRef ref) async {

@@ -37,6 +37,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     return AdminPage(
       title: 'Clientes',
       description: 'Cadastre clientes e acompanhe as dividas.',
+      onRefresh: _refreshPage,
       action: FilledButton.icon(
         onPressed: state.isSaving ? null : () => _openForm(context, ref),
         icon: const Icon(Icons.add),
@@ -80,6 +81,10 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _refreshPage() {
+    return ref.read(clientsProvider.notifier).loadClients();
   }
 
   Future<void> _openForm(

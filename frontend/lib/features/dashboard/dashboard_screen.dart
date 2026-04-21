@@ -78,97 +78,104 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 980),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Jimeri',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineLarge
-                                  ?.copyWith(
-                                    color: AppColors.primary,
-                                  ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Escolha uma area para continuar.',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ],
+        child: RefreshIndicator(
+          onRefresh: _refreshPage,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(24),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 980),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Jimeri',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineLarge
+                                    ?.copyWith(
+                                      color: AppColors.primary,
+                                    ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Escolha uma area para continuar.',
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                            ],
+                          ),
                         ),
+                      ],
+                    ),
+                    if (clientsAsync.hasError) ...[
+                      const SizedBox(height: 24),
+                      PageFeedbackCard(
+                        title: 'Falha ao carregar o painel',
+                        message: 'Nao foi possivel buscar os dados agora.',
+                        tone: PageFeedbackTone.error,
+                        actionLabel: 'Tentar novamente',
+                        onAction: () => ref.invalidate(dashboardClientsProvider),
                       ),
                     ],
-                  ),
-                  if (clientsAsync.hasError) ...[
-                    const SizedBox(height: 24),
-                    PageFeedbackCard(
-                      title: 'Falha ao carregar o painel',
-                      message: 'Nao foi possivel buscar os dados agora.',
-                      tone: PageFeedbackTone.error,
-                      actionLabel: 'Tentar novamente',
-                      onAction: () => ref.invalidate(dashboardClientsProvider),
-                    ),
-                  ],
                   const SizedBox(height: 32),
                   _DashboardSummary(
                     isLoading: clientsAsync.isLoading,
-                    debtors: debtors,
                     totalDebtCents: totalDebtCents,
                     clientsWithDebt: clientsWithDebt,
                     activeClients: activeClients,
-                    onOpenDebtors: debtors.isEmpty
-                        ? null
-                        : () => _showDebtorsDialog(
-                              context,
-                              debtors: debtors,
-                              totalDebtCents: totalDebtCents,
-                            ),
-                  ),
-                  const SizedBox(height: 32),
-                  Text(
-                    'Atalhos',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final columns = constraints.maxWidth >= 720 ? 3 : 1;
+                      onOpenDebtors: debtors.isEmpty
+                          ? null
+                          : () => _showDebtorsDialog(
+                                context,
+                                debtors: debtors,
+                                totalDebtCents: totalDebtCents,
+                              ),
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      'Atalhos',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final columns = constraints.maxWidth >= 720 ? 3 : 1;
 
-                      return GridView.builder(
-                        itemCount: actions.length,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: columns,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          mainAxisExtent: columns == 1 ? 96 : 104,
-                        ),
-                        itemBuilder: (context, index) {
-                          return _DashboardButton(action: actions[index]);
-                        },
-                      );
-                    },
-                  ),
-                ],
+                        return GridView.builder(
+                          itemCount: actions.length,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: columns,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            mainAxisExtent: columns == 1 ? 96 : 104,
+                          ),
+                          itemBuilder: (context, index) {
+                            return _DashboardButton(action: actions[index]);
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _refreshPage() async {
+    await ref.refresh(dashboardClientsProvider.future);
   }
 
   Future<void> _showDebtorsDialog(
@@ -253,7 +260,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 class _DashboardSummary extends StatelessWidget {
   const _DashboardSummary({
     required this.isLoading,
-    required this.debtors,
     required this.totalDebtCents,
     required this.clientsWithDebt,
     required this.activeClients,
@@ -261,7 +267,6 @@ class _DashboardSummary extends StatelessWidget {
   });
 
   final bool isLoading;
-  final List<ClientWithBalanceDto> debtors;
   final int totalDebtCents;
   final int clientsWithDebt;
   final int activeClients;
