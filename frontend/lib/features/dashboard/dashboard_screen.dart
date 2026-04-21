@@ -32,9 +32,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final clientsAsync = ref.watch(dashboardClientsProvider);
     final clients = clientsAsync.value ?? const <ClientWithBalanceDto>[];
-    final debtors = clients
-        .where((item) => item.balanceCents > 0)
-        .toList()
+    final debtors = clients.where((item) => item.balanceCents > 0).toList()
       ..sort((left, right) => right.balanceCents.compareTo(left.balanceCents));
     final totalDebtCents = clients.fold<int>(
       0,
@@ -206,7 +204,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               Container(
                 height: 6,
                 decoration: BoxDecoration(
-                  color: AppColors.warning,
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -226,6 +224,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
+                    Divider(height: 1),
                     Text(
                       formatCents(totalDebtCents),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -329,6 +328,10 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconColor = Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+
     final content = Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -359,7 +362,7 @@ class _SummaryCard extends StatelessWidget {
           ),
           if (onPressed != null) ...[
             const SizedBox(width: 12),
-            Icon(Icons.arrow_forward_rounded, color: color),
+            Icon(Icons.arrow_forward_rounded, color: iconColor),
           ],
         ],
       ),
