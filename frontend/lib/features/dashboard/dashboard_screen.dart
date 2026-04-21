@@ -224,7 +224,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
-                    Divider(height: 1),
+                    Divider(),
                     Text(
                       formatCents(totalDebtCents),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
