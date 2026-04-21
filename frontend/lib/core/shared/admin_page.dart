@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class AdminPage extends StatelessWidget {
   const AdminPage({
@@ -7,6 +8,7 @@ class AdminPage extends StatelessWidget {
     required this.child,
     this.action,
     this.floatingOverlay,
+    this.showBackButton = true,
     super.key,
   });
 
@@ -15,6 +17,7 @@ class AdminPage extends StatelessWidget {
   final Widget child;
   final Widget? action;
   final Widget? floatingOverlay;
+  final bool showBackButton;
 
   @override
   Widget build(BuildContext context) {
@@ -38,18 +41,35 @@ class AdminPage extends StatelessWidget {
                         children: [
                           ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 620),
-                            child: Column(
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  title,
-                                  style:
-                                      Theme.of(context).textTheme.headlineLarge,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  description,
-                                  style: Theme.of(context).textTheme.bodyLarge,
+                                if (showBackButton) ...[
+                                  IconButton(
+                                    onPressed: () => context.go('/dashboard'),
+                                    icon: const Icon(Icons.arrow_back_ios_new),
+                                    tooltip: 'Voltar',
+                                    visualDensity: VisualDensity.compact,
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                  const SizedBox(width: 12),
+                                ],
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        title,
+                                        style:
+                                            Theme.of(context).textTheme.headlineLarge,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        description,
+                                        style: Theme.of(context).textTheme.bodyLarge,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
