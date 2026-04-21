@@ -580,7 +580,7 @@ class _ProductButton extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.w800,
                                   ),
                         ),
@@ -605,14 +605,7 @@ class _ProductButton extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const Spacer(),
-                  Text(
-                    product.category?.name ?? 'Sem categoria',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     formatCents(product.priceCents),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
