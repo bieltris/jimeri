@@ -270,7 +270,7 @@ class _DashboardButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OutlinedButton(
-      onPressed: () => context.go(action.route),
+      onPressed: () => context.push(action.route),
       style: OutlinedButton.styleFrom(
         alignment: Alignment.centerLeft,
         backgroundColor: Theme.of(context).colorScheme.surface,
