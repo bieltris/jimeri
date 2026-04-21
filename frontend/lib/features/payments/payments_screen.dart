@@ -11,11 +11,22 @@ import '../../models/payment_model.dart';
 import 'payments_provider.dart';
 import 'widgets/payment_form_dialog.dart';
 
-class PaymentsScreen extends ConsumerWidget {
+class PaymentsScreen extends ConsumerStatefulWidget {
   const PaymentsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PaymentsScreen> createState() => _PaymentsScreenState();
+}
+
+class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(ref.read(paymentsProvider.notifier).loadClients);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(paymentsProvider);
     final selectedClient = state.selectedClient;
 

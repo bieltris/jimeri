@@ -9,11 +9,25 @@ import 'widgets/product_form_dialog.dart';
 import 'widgets/products_card_list.dart';
 import 'widgets/products_table.dart';
 
-class ProductsScreen extends ConsumerWidget {
+class ProductsScreen extends ConsumerStatefulWidget {
   const ProductsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProductsScreen> createState() => _ProductsScreenState();
+}
+
+class _ProductsScreenState extends ConsumerState<ProductsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      await ref.read(productsProvider.notifier).loadProducts();
+      await ref.read(productsProvider.notifier).loadCategories();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(productsProvider);
     final products = state.visibleProducts;
 
@@ -175,13 +189,6 @@ class _ProductsFilters extends ConsumerWidget {
               onSelectionChanged: (values) {
                 ref.read(productsProvider.notifier).setFilter(values.first);
               },
-            ),
-            IconButton(
-              tooltip: 'Atualizar',
-              onPressed: state.isLoading
-                  ? null
-                  : ref.read(productsProvider.notifier).loadProducts,
-              icon: const Icon(Icons.refresh),
             ),
           ],
         );

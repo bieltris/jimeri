@@ -99,13 +99,6 @@ class ProductsController extends Notifier<ProductsState> {
       _searchDebounce?.cancel();
     });
 
-    Future.microtask(() async {
-      await Future.wait([
-        loadProducts(),
-        loadCategories(),
-      ]);
-    });
-
     return const ProductsState(isLoading: true);
   }
 

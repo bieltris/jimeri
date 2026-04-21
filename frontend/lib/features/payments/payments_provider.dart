@@ -78,7 +78,6 @@ class PaymentFormInput {
 class PaymentsController extends Notifier<PaymentsState> {
   @override
   PaymentsState build() {
-    Future.microtask(loadClients);
     return const PaymentsState(isLoading: true);
   }
 

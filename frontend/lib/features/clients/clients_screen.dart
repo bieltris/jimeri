@@ -15,11 +15,22 @@ import '../payments/widgets/payment_form_dialog.dart';
 import 'clients_provider.dart';
 import 'widgets/client_form_dialog.dart';
 
-class ClientsScreen extends ConsumerWidget {
+class ClientsScreen extends ConsumerStatefulWidget {
   const ClientsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ClientsScreen> createState() => _ClientsScreenState();
+}
+
+class _ClientsScreenState extends ConsumerState<ClientsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(ref.read(clientsProvider.notifier).loadClients);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(clientsProvider);
     final clients = state.visibleClients;
 
@@ -228,12 +239,6 @@ class _ClientFilters extends ConsumerWidget {
           onSelectionChanged: (values) {
             ref.read(clientsProvider.notifier).setFilter(values.first);
           },
-        ),
-        IconButton(
-          tooltip: 'Atualizar',
-          onPressed:
-              state.isLoading ? null : ref.read(clientsProvider.notifier).loadClients,
-          icon: const Icon(Icons.refresh),
         ),
       ],
     );

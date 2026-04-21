@@ -8,16 +8,26 @@ import '../../core/utils/money.dart';
 import '../../dtos/client_with_balance_dto.dart';
 import '../../services/clients_service.dart';
 
-final dashboardClientsProvider =
-    FutureProvider<List<ClientWithBalanceDto>>((ref) {
+final dashboardClientsProvider = FutureProvider<List<ClientWithBalanceDto>>((ref) {
   return ClientsService().list();
 });
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.invalidate(dashboardClientsProvider));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final clientsAsync = ref.watch(dashboardClientsProvider);
     final clients = clientsAsync.value ?? const <ClientWithBalanceDto>[];
     final totalDebtCents = clients.fold<int>(
@@ -90,14 +100,6 @@ class DashboardScreen extends ConsumerWidget {
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      IconButton.filledTonal(
-                        tooltip: 'Atualizar painel',
-                        onPressed: clientsAsync.isLoading
-                            ? null
-                            : () => ref.invalidate(dashboardClientsProvider),
-                        icon: const Icon(Icons.refresh),
                       ),
                     ],
                   ),
