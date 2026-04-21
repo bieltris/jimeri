@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/shared/adaptive_form_sheet.dart';
 import '../../../core/shared/app_snackbar.dart';
 import '../../../core/shared/responsive_dialog.dart';
 import '../../../core/utils/money.dart';
@@ -55,7 +56,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     final isEditing = widget.product != null;
     final productsState = ref.watch(productsProvider);
 
-    return ResponsiveDialog(
+    return AdaptiveFormContainer(
       title: Text(isEditing ? 'Editar produto' : 'Novo produto'),
       child: Form(
         key: _formKey,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/shared/responsive_dialog.dart';
+import '../../../core/shared/adaptive_form_sheet.dart';
 import '../../../core/utils/money.dart';
 import '../../../models/payment_model.dart';
 import '../payments_provider.dart';
@@ -28,7 +28,7 @@ class _PaymentFormDialogState extends State<PaymentFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return ResponsiveDialog(
+    return AdaptiveFormContainer(
       title: const Text('Registrar pagamento'),
       child: Form(
         key: _formKey,

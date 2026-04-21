@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/shared/admin_page.dart';
+import '../../core/shared/adaptive_form_sheet.dart';
 import '../../core/shared/app_snackbar.dart';
 import '../../models/product_model.dart';
 import 'products_provider.dart';
@@ -89,9 +90,8 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     WidgetRef ref, [
     ProductModel? product,
   ]) async {
-    final input = await showDialog<ProductFormInput>(
+    final input = await showAdaptiveFormSheet<ProductFormInput>(
       context: context,
-      barrierDismissible: false,
       builder: (context) => ProductFormDialog(product: product),
     );
 

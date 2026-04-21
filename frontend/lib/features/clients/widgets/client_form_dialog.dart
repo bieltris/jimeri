@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/shared/responsive_dialog.dart';
+import '../../../core/shared/adaptive_form_sheet.dart';
 import '../../../dtos/client_with_balance_dto.dart';
 import '../clients_provider.dart';
 
@@ -54,7 +54,7 @@ class _ClientFormDialogState extends State<ClientFormDialog> {
   Widget build(BuildContext context) {
     final isEditing = widget.client != null;
 
-    return ResponsiveDialog(
+    return AdaptiveFormContainer(
       title: Text(isEditing ? 'Editar cliente' : 'Novo cliente'),
       maxWidth: 460,
       child: Form(

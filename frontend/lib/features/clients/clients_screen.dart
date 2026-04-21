@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/shared/admin_page.dart';
+import '../../core/shared/adaptive_form_sheet.dart';
 import '../../core/shared/app_snackbar.dart';
 import '../../core/shared/page_feedback.dart';
 import '../../core/platform/open_external_url.dart';
@@ -92,9 +93,8 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     WidgetRef ref, [
     ClientWithBalanceDto? client,
   ]) async {
-    final input = await showDialog<ClientFormInput>(
+    final input = await showAdaptiveFormSheet<ClientFormInput>(
       context: context,
-      barrierDismissible: false,
       builder: (context) => ClientFormDialog(client: client),
     );
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/shared/admin_page.dart';
+import '../../core/shared/adaptive_form_sheet.dart';
 import '../../core/shared/app_snackbar.dart';
 import '../../core/shared/page_feedback.dart';
 import '../../core/shared/responsive_dialog.dart';
@@ -119,9 +120,8 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
   }
 
   Future<void> _openPaymentForm(BuildContext context, WidgetRef ref) async {
-    final input = await showDialog<PaymentFormInput>(
+    final input = await showAdaptiveFormSheet<PaymentFormInput>(
       context: context,
-      barrierDismissible: false,
       builder: (context) => const PaymentFormDialog(),
     );
 

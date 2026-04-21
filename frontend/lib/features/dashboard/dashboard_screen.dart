@@ -121,15 +121,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         message: 'Nao foi possivel buscar os dados agora.',
                         tone: PageFeedbackTone.error,
                         actionLabel: 'Tentar novamente',
-                        onAction: () => ref.invalidate(dashboardClientsProvider),
+                        onAction: () =>
+                            ref.invalidate(dashboardClientsProvider),
                       ),
                     ],
-                  const SizedBox(height: 32),
-                  _DashboardSummary(
-                    isLoading: clientsAsync.isLoading,
-                    totalDebtCents: totalDebtCents,
-                    clientsWithDebt: clientsWithDebt,
-                    activeClients: activeClients,
+                    const SizedBox(height: 32),
+                    _DashboardSummary(
+                      isLoading: clientsAsync.isLoading,
+                      totalDebtCents: totalDebtCents,
+                      clientsWithDebt: clientsWithDebt,
+                      activeClients: activeClients,
                       onOpenDebtors: debtors.isEmpty
                           ? null
                           : () => _showDebtorsDialog(
@@ -152,7 +153,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           itemCount: actions.length,
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: columns,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
@@ -175,7 +177,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Future<void> _refreshPage() async {
-    await ref.refresh(dashboardClientsProvider.future);
+    return await ref.refresh(dashboardClientsProvider.future);
   }
 
   Future<void> _showDebtorsDialog(
