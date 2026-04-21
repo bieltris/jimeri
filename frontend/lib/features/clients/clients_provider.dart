@@ -94,8 +94,6 @@ class ClientsController extends Notifier<ClientsState> {
       _searchDebounce?.cancel();
     });
 
-    Future.microtask(loadClients);
-
     return const ClientsState(isLoading: true);
   }
 

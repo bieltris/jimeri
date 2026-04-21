@@ -78,7 +78,6 @@ class PaymentFormInput {
 class PaymentsController extends Notifier<PaymentsState> {
   @override
   PaymentsState build() {
-    Future.microtask(loadClients);
     return const PaymentsState(isLoading: true);
   }
 
@@ -95,6 +94,17 @@ class PaymentsController extends Notifier<PaymentsState> {
     } on ApiException catch (error) {
       state = state.copyWith(isLoading: false, error: error.message);
     }
+  }
+
+  Future<void> reloadSelectedClient() async {
+    final clientId = state.selectedClientId;
+    if (clientId == null || clientId.isEmpty) {
+      await loadClients();
+      return;
+    }
+
+    await loadClients();
+    await selectClient(clientId);
   }
 
   Future<void> selectClient(String? clientId) async {

@@ -2,21 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/shared/page_feedback.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/money.dart';
 import '../../dtos/client_with_balance_dto.dart';
 import '../../services/clients_service.dart';
 
-final dashboardClientsProvider =
-    FutureProvider<List<ClientWithBalanceDto>>((ref) {
+final dashboardClientsProvider = FutureProvider<List<ClientWithBalanceDto>>((ref) {
   return ClientsService().list();
 });
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.invalidate(dashboardClientsProvider));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final clientsAsync = ref.watch(dashboardClientsProvider);
     final clients = clientsAsync.value ?? const <ClientWithBalanceDto>[];
     final totalDebtCents = clients.fold<int>(
@@ -67,17 +78,41 @@ class DashboardScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Jimeri',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          color: AppColors.primary,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Jimeri',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineLarge
+                                  ?.copyWith(
+                                    color: AppColors.primary,
+                                  ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Escolha uma area para continuar.',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ],
                         ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Escolha uma area para continuar.',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
+                  if (clientsAsync.hasError) ...[
+                    const SizedBox(height: 24),
+                    PageFeedbackCard(
+                      title: 'Falha ao carregar o painel',
+                      message: 'Nao foi possivel buscar os dados agora.',
+                      tone: PageFeedbackTone.error,
+                      actionLabel: 'Tentar novamente',
+                      onAction: () => ref.invalidate(dashboardClientsProvider),
+                    ),
+                  ],
                   const SizedBox(height: 32),
                   _DashboardSummary(
                     isLoading: clientsAsync.isLoading,
@@ -137,7 +172,10 @@ class _DashboardSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const LinearProgressIndicator();
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: LinearProgressIndicator(),
+      );
     }
 
     return LayoutBuilder(

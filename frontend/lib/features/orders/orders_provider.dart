@@ -53,6 +53,21 @@ class OrdersState {
     return null;
   }
 
+  String get lastOrderClientName {
+    final order = lastOrder;
+    if (order == null) {
+      return 'Cliente';
+    }
+
+    for (final client in clients) {
+      if (client.client.id == order.order.clientId) {
+        return client.client.name;
+      }
+    }
+
+    return 'Cliente';
+  }
+
   List<ClientWithBalanceDto> get visibleClients {
     final search = clientSearch.trim().toLowerCase();
     return clients.where((item) {
@@ -69,6 +84,55 @@ class OrdersState {
           (client.responsibleName ?? '').toLowerCase().contains(search) ||
           (client.responsibleWhatsapp ?? '').contains(search);
     }).toList();
+  }
+
+  List<ClientWithBalanceDto> get suggestedClients {
+    final search = clientSearch.trim().toLowerCase();
+    if (search.isEmpty) {
+      return const [];
+    }
+
+    final scored = <({ClientWithBalanceDto client, int score})>[];
+    for (final item in clients) {
+      final client = item.client;
+      if (!client.active) {
+        continue;
+      }
+
+      final name = client.name.toLowerCase();
+      final responsible = (client.responsibleName ?? '').toLowerCase();
+      final whatsapp = client.responsibleWhatsapp ?? '';
+
+      int? score;
+      if (name.startsWith(search)) {
+        score = 0;
+      } else if (responsible.startsWith(search)) {
+        score = 1;
+      } else if (whatsapp.startsWith(search)) {
+        score = 2;
+      } else if (name.contains(search)) {
+        score = 3;
+      } else if (responsible.contains(search)) {
+        score = 4;
+      } else if (whatsapp.contains(search)) {
+        score = 5;
+      }
+
+      if (score != null) {
+        scored.add((client: item, score: score));
+      }
+    }
+
+    scored.sort((a, b) {
+      final byScore = a.score.compareTo(b.score);
+      if (byScore != 0) {
+        return byScore;
+      }
+
+      return a.client.client.name.compareTo(b.client.client.name);
+    });
+
+    return scored.take(5).map((entry) => entry.client).toList();
   }
 
   List<ProductModel> get visibleProducts {
@@ -148,8 +212,6 @@ class OrderCartItem {
 class OrdersController extends Notifier<OrdersState> {
   @override
   OrdersState build() {
-    Future.microtask(loadData);
-
     return const OrdersState(isLoading: true);
   }
 
@@ -186,6 +248,10 @@ class OrdersController extends Notifier<OrdersState> {
       selectedClientId: clientId,
       clearSelectedClient: clientId == null || clientId.isEmpty,
     );
+  }
+
+  void clearSelectedClient() {
+    state = state.copyWith(clearSelectedClient: true);
   }
 
   void setNote(String value) {

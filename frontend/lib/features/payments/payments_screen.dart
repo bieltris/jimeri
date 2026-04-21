@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/shared/admin_page.dart';
 import '../../core/shared/app_snackbar.dart';
+import '../../core/shared/page_feedback.dart';
 import '../../core/shared/responsive_dialog.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/money.dart';
@@ -10,11 +11,22 @@ import '../../models/payment_model.dart';
 import 'payments_provider.dart';
 import 'widgets/payment_form_dialog.dart';
 
-class PaymentsScreen extends ConsumerWidget {
+class PaymentsScreen extends ConsumerStatefulWidget {
   const PaymentsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PaymentsScreen> createState() => _PaymentsScreenState();
+}
+
+class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(ref.read(paymentsProvider.notifier).loadClients);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(paymentsProvider);
     final selectedClient = state.selectedClient;
 
@@ -22,7 +34,7 @@ class PaymentsScreen extends ConsumerWidget {
       title: 'Pagamentos',
       description: 'Registre valores recebidos e acompanhe baixas por cliente.',
       action: FilledButton.icon(
-        onPressed: selectedClient == null || state.isSaving
+        onPressed: selectedClient == null || state.isSaving || state.isLoading
             ? null
             : () => _openPaymentForm(context, ref),
         icon: const Icon(Icons.add),
@@ -31,6 +43,18 @@ class PaymentsScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (state.error != null) ...[
+            PageFeedbackCard(
+              title: 'Falha ao carregar pagamentos',
+              message: state.error!,
+              tone: PageFeedbackTone.error,
+              actionLabel: 'Atualizar',
+              onAction: state.isLoading
+                  ? null
+                  : ref.read(paymentsProvider.notifier).reloadSelectedClient,
+            ),
+            const SizedBox(height: 16),
+          ],
           DropdownButtonFormField<String>(
             value: state.selectedClientId,
             isExpanded: true,
@@ -44,7 +68,9 @@ class PaymentsScreen extends ConsumerWidget {
                 child: Text('${item.client.name} - ${formatCents(item.balanceCents)}'),
               );
             }).toList(),
-            onChanged: ref.read(paymentsProvider.notifier).selectClient,
+            onChanged: state.isSaving
+                ? null
+                : ref.read(paymentsProvider.notifier).selectClient,
           ),
           const SizedBox(height: 16),
           if (selectedClient != null)
@@ -66,13 +92,21 @@ class PaymentsScreen extends ConsumerWidget {
               ),
             )
           else if (state.selectedClientId == null)
-            const Text('Selecione um cliente para ver os pagamentos.')
+            const PageFeedbackCard(
+              title: 'Selecione um cliente',
+              message: 'Escolha um cliente para consultar e registrar pagamentos.',
+            )
           else if (state.payments.isEmpty)
-            const Text('Nenhum pagamento registrado para este cliente.')
+            const PageFeedbackCard(
+              title: 'Nenhum pagamento registrado',
+              message: 'Esse cliente ainda nao possui pagamentos cadastrados.',
+            )
           else
             _PaymentsList(
               payments: state.payments,
-              onCancel: (payment) => _cancelPayment(context, ref, payment),
+              onCancel: state.isSaving
+                  ? null
+                  : (payment) => _cancelPayment(context, ref, payment),
             ),
         ],
       ),
@@ -165,7 +199,7 @@ class _PaymentsList extends StatelessWidget {
   });
 
   final List<PaymentModel> payments;
-  final ValueChanged<PaymentModel> onCancel;
+  final ValueChanged<PaymentModel>? onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -210,7 +244,7 @@ class _PaymentsList extends StatelessWidget {
               ),
               if (!payment.cancelled)
                 TextButton(
-                  onPressed: () => onCancel(payment),
+                  onPressed: onCancel == null ? null : () => onCancel!(payment),
                   child: const Text('Cancelar'),
                 )
               else
