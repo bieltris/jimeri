@@ -43,9 +43,9 @@ class LoginController extends Notifier<LoginState> {
 
     try {
       await ref.read(authServiceProvider).login(
-        email: normalizedEmail,
-        password: password,
-      );
+            email: normalizedEmail,
+            password: password,
+          );
 
       return null;
     } on ApiException catch (error) {
