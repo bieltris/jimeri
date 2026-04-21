@@ -64,6 +64,7 @@ class ClientsScreen extends ConsumerWidget {
   ]) async {
     final input = await showDialog<ClientFormInput>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => ClientFormDialog(client: client),
     );
 
@@ -145,6 +146,7 @@ class ClientsScreen extends ConsumerWidget {
   ) async {
     final input = await showDialog<PaymentFormInput>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => const PaymentFormDialog(),
     );
 

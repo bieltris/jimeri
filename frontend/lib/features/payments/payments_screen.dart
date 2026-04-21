@@ -82,6 +82,7 @@ class PaymentsScreen extends ConsumerWidget {
   Future<void> _openPaymentForm(BuildContext context, WidgetRef ref) async {
     final input = await showDialog<PaymentFormInput>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => const PaymentFormDialog(),
     );
 
@@ -134,6 +135,7 @@ class PaymentsScreen extends ConsumerWidget {
 
     return showDialog<String>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => ResponsiveDialog(
         title: const Text('Cancelar pagamento'),
         child: TextField(
@@ -143,10 +145,6 @@ class PaymentsScreen extends ConsumerWidget {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Voltar'),
-          ),
           FilledButton(
             onPressed: () {
               final reason = controller.text.trim();

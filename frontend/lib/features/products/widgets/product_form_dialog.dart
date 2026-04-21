@@ -151,10 +151,6 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
         FilledButton(
           onPressed: _submit,
           child: const Text('Salvar'),
@@ -181,6 +177,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   Future<void> _createCategory() async {
     final category = await showDialog<ProductCategoryModel>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => const _CreateCategoryDialog(),
     );
 
@@ -239,10 +236,6 @@ class _CreateCategoryDialogState extends ConsumerState<_CreateCategoryDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: state.isSaving ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
         FilledButton(
           onPressed: state.isSaving ? null : _submit,
           child: state.isSaving

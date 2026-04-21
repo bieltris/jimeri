@@ -71,6 +71,7 @@ class ProductsScreen extends ConsumerWidget {
   ]) async {
     final input = await showDialog<ProductFormInput>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => ProductFormDialog(product: product),
     );
 

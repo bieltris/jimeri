@@ -120,10 +120,6 @@ class _ClientFormDialogState extends State<ClientFormDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
         FilledButton(
           onPressed: _submit,
           child: const Text('Salvar'),

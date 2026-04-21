@@ -89,10 +89,6 @@ class _PaymentFormDialogState extends State<PaymentFormDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
         FilledButton(
           onPressed: _submit,
           child: const Text('Salvar'),
