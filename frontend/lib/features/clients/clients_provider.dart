@@ -125,7 +125,7 @@ class ClientsController extends Notifier<ClientsState> {
     state = state.copyWith(filter: filter);
   }
 
-  Future<String?> createClient(ClientFormInput input) async {
+  Future<ClientWithBalanceDto?> createClient(ClientFormInput input) async {
     state = state.copyWith(isSaving: true, clearError: true);
 
     try {
@@ -142,14 +142,14 @@ class ClientsController extends Notifier<ClientsState> {
         clearError: true,
       );
 
-      return null;
+      return client;
     } on ApiException catch (error) {
       state = state.copyWith(isSaving: false, error: error.message);
-      return error.message;
+      return null;
     }
   }
 
-  Future<String?> updateClient(
+  Future<ClientWithBalanceDto?> updateClient(
     ClientWithBalanceDto current,
     ClientFormInput input,
   ) async {
@@ -171,15 +171,19 @@ class ClientsController extends Notifier<ClientsState> {
         clearError: true,
       );
 
-      return null;
+      return updated;
     } on ApiException catch (error) {
       state = state.copyWith(isSaving: false, error: error.message);
-      return error.message;
+      return null;
     }
   }
 
   Future<String?> toggleClientStatus(ClientWithBalanceDto current) {
-    return updateClient(
+    return _toggleClientStatus(current);
+  }
+
+  Future<String?> _toggleClientStatus(ClientWithBalanceDto current) async {
+    final updated = await updateClient(
       current,
       ClientFormInput(
         name: current.client.name,
@@ -189,6 +193,12 @@ class ClientsController extends Notifier<ClientsState> {
         active: !current.client.active,
       ),
     );
+
+    if (updated == null) {
+      return state.error ?? 'Nao foi possivel atualizar o cliente.';
+    }
+
+    return null;
   }
 
   List<ClientWithBalanceDto> _replaceClient(ClientWithBalanceDto client) {

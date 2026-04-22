@@ -184,8 +184,9 @@ class OrdersState {
       clients: clients ?? this.clients,
       products: products ?? this.products,
       cart: cart ?? this.cart,
-      selectedClientId:
-          clearSelectedClient ? null : selectedClientId ?? this.selectedClientId,
+      selectedClientId: clearSelectedClient
+          ? null
+          : selectedClientId ?? this.selectedClientId,
       clientSearch: clientSearch ?? this.clientSearch,
       productSearch: productSearch ?? this.productSearch,
       note: note ?? this.note,
@@ -305,6 +306,14 @@ class OrdersController extends Notifier<OrdersState> {
     state = state.copyWith(cart: const [], note: '', clearLastOrder: true);
   }
 
+  void attachCreatedClient(ClientWithBalanceDto newClient) {
+    state = state.copyWith(
+      selectedClientId: newClient.client.id,
+      clientSearch: newClient.client.name,
+      clients: [newClient, ...state.clients],
+    );
+  }
+
   Future<String?> submitOrder() async {
     final client = state.selectedClient;
     if (client == null) {
@@ -336,7 +345,9 @@ class OrdersController extends Notifier<OrdersState> {
 
       state = state.copyWith(
         clients: state.clients.map((item) {
-          return item.client.id == updatedClient.client.id ? updatedClient : item;
+          return item.client.id == updatedClient.client.id
+              ? updatedClient
+              : item;
         }).toList(),
         clearSelectedClient: true,
         cart: const [],

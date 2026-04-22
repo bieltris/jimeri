@@ -7,36 +7,37 @@ import 'package:jimeri_frontend/features/clients/clients_provider.dart';
 import 'package:jimeri_frontend/features/clients/widgets/client_form_dialog.dart';
 
 class ClientFormFlow {
-  static Future<void> open(
-    BuildContext context,
-    WidgetRef ref, [
-    ClientWithBalanceDto? client,
-  ]) async {
+  static Future<ClientWithBalanceDto?> open(BuildContext context, WidgetRef ref,
+      [ClientWithBalanceDto? client]) async {
     final input = await showAdaptiveFormSheet<ClientFormInput>(
       context: context,
       builder: (context) => ClientFormDialog(client: client),
     );
 
     if (input == null || !context.mounted) {
-      return;
+      return null;
     }
 
-    final error = client == null
+    final newClient = client == null
         ? await ref.read(clientsProvider.notifier).createClient(input)
         : await ref.read(clientsProvider.notifier).updateClient(client, input);
 
     if (!context.mounted) {
-      return;
+      return null;
     }
 
-    if (error != null) {
+    if (newClient == null) {
+      final error =
+          ref.read(clientsProvider).error ?? 'Nao foi possivel salvar o cliente.';
       AppSnackBar.showError(error, context: context);
-      return;
+      return null;
     }
 
     AppSnackBar.showSuccess(
       client == null ? 'Cliente criado.' : 'Cliente atualizado.',
       context: context,
     );
+
+    return newClient;
   }
 }

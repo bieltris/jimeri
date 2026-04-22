@@ -349,7 +349,7 @@ class _ClientPickerState extends ConsumerState<_ClientPicker> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               TextButton.icon(
-                onPressed: () => ClientFormFlow.open(context, ref),
+                onPressed: () => _createNewClient(context),
                 icon: const Icon(Icons.add),
                 label: const Text('Criar client'),
               ),
@@ -491,6 +491,15 @@ class _ClientPickerState extends ConsumerState<_ClientPicker> {
         alignment: 0,
       );
     });
+  }
+
+  Future<void> _createNewClient(BuildContext context) async {
+    final newClient = await ClientFormFlow.open(context, ref);
+    if (newClient == null || !mounted) {
+      return;
+    }
+
+    ref.read(ordersProvider.notifier).attachCreatedClient(newClient);
   }
 }
 
