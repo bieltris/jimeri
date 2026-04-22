@@ -298,6 +298,7 @@ class _PaymentsClientPickerState extends ConsumerState<_PaymentsClientPicker> {
   @override
   Widget build(BuildContext context) {
     final enabled = !widget.state.isSaving;
+    final isNarrow = MediaQuery.sizeOf(context).width < 680;
 
     return Container(
       key: _pickerKey,
@@ -402,6 +403,12 @@ class _PaymentsClientPickerState extends ConsumerState<_PaymentsClientPicker> {
                 return const SizedBox.shrink();
               }
 
+              // On mobile web the virtual keyboard often overlays content without
+              // reporting viewInsets. Keep the overlay short enough to fit.
+              final maxHeight = isNarrow
+                  ? (MediaQuery.sizeOf(context).height * 0.32).clamp(160.0, 240.0)
+                  : 280.0;
+
               return Align(
                 alignment: Alignment.topLeft,
                 child: Material(
@@ -416,9 +423,9 @@ class _PaymentsClientPickerState extends ConsumerState<_PaymentsClientPicker> {
                     ),
                   ),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(
+                    constraints: BoxConstraints(
                       maxWidth: 640,
-                      maxHeight: 280,
+                      maxHeight: maxHeight,
                     ),
                     child: ListView.separated(
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -459,6 +466,13 @@ class _PaymentsClientPickerState extends ConsumerState<_PaymentsClientPicker> {
               );
             },
           ),
+
+          // When the page is short, there's no scroll extent to move the field
+          // above the keyboard. This spacer creates scroll room while typing.
+          if (isNarrow && _focusNode.hasFocus) ...[
+            const SizedBox(height: 12),
+            SizedBox(height: _keyboardScrollSpacer(context)),
+          ],
         ],
       ),
     );
@@ -480,6 +494,9 @@ class _PaymentsClientPickerState extends ConsumerState<_PaymentsClientPicker> {
   }
 
   void _handleFocusChange() {
+    if (mounted) {
+      setState(() {});
+    }
     if (!_focusNode.hasFocus) {
       return;
     }
@@ -529,4 +546,14 @@ class _KeyboardObserver with WidgetsBindingObserver {
   void didChangeMetrics() {
     onMetricsChanged();
   }
+}
+
+double _keyboardScrollSpacer(BuildContext context) {
+  // Prefer real insets when available; otherwise estimate for iOS Safari web.
+  final insets = MediaQuery.viewInsetsOf(context).bottom;
+  if (insets > 0) {
+    return (insets + 120).clamp(220.0, 520.0);
+  }
+
+  return (MediaQuery.sizeOf(context).height * 0.42).clamp(240.0, 520.0);
 }
