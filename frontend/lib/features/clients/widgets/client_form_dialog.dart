@@ -80,7 +80,7 @@ class _ClientFormDialogState extends State<ClientFormDialog> {
             TextFormField(
               controller: _responsibleNameController,
               decoration: const InputDecoration(
-                labelText: 'Responsavel',
+                labelText: 'Responsavel (opcional)',
                 prefixIcon: Icon(Icons.supervisor_account_outlined),
               ),
             ),
@@ -89,7 +89,7 @@ class _ClientFormDialogState extends State<ClientFormDialog> {
               controller: _whatsappController,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(
-                labelText: 'WhatsApp do responsavel',
+                labelText: 'WhatsApp do responsavel (opcional)',
                 prefixIcon: Icon(Icons.chat_outlined),
               ),
             ),
@@ -99,7 +99,7 @@ class _ClientFormDialogState extends State<ClientFormDialog> {
               minLines: 2,
               maxLines: 3,
               decoration: const InputDecoration(
-                labelText: 'Observacao',
+                labelText: 'Observacao (opcional)',
                 prefixIcon: Icon(Icons.notes_outlined),
               ),
             ),

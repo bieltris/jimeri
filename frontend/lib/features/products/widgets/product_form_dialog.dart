@@ -83,7 +83,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
               value: _categoryId ?? '',
               isExpanded: true,
               decoration: const InputDecoration(
-                labelText: 'Categoria',
+                labelText: 'Categoria (opcional)',
                 prefixIcon: Icon(Icons.category_outlined),
               ),
               items: [

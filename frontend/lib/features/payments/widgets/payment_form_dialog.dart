@@ -81,7 +81,7 @@ class _PaymentFormDialogState extends State<PaymentFormDialog> {
               minLines: 2,
               maxLines: 3,
               decoration: const InputDecoration(
-                labelText: 'Observacao',
+                labelText: 'Observacao (opcional)',
                 prefixIcon: Icon(Icons.notes_outlined),
               ),
             ),
