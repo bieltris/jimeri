@@ -263,10 +263,14 @@ class _PaymentsClientPickerState extends ConsumerState<_PaymentsClientPicker> {
   final _pickerKey = GlobalKey();
   final _searchController = TextEditingController();
   final _focusNode = FocusNode();
+  late final _KeyboardObserver _keyboardObserver;
 
   @override
   void initState() {
     super.initState();
+    _keyboardObserver =
+        _KeyboardObserver(onMetricsChanged: _maybeScrollIntoView);
+    WidgetsBinding.instance.addObserver(_keyboardObserver);
     _focusNode.addListener(_handleFocusChange);
     _syncSelectedClientName();
   }
@@ -285,6 +289,7 @@ class _PaymentsClientPickerState extends ConsumerState<_PaymentsClientPicker> {
   @override
   void dispose() {
     _focusNode.removeListener(_handleFocusChange);
+    WidgetsBinding.instance.removeObserver(_keyboardObserver);
     _searchController.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -479,18 +484,49 @@ class _PaymentsClientPickerState extends ConsumerState<_PaymentsClientPicker> {
       return;
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final context = _pickerKey.currentContext;
-      if (context == null || !mounted) {
-        return;
-      }
+    _maybeScrollIntoView();
+  }
 
-      Scrollable.ensureVisible(
-        context,
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOut,
-        alignment: 0,
-      );
+  void _maybeScrollIntoView() {
+    if (!_focusNode.hasFocus) {
+      return;
+    }
+
+    // On mobile the keyboard often opens a frame after focus, so we schedule
+    // multiple attempts: immediate post-frame and a short delayed retry.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollPickerToTop();
+      Future.delayed(const Duration(milliseconds: 160), _scrollPickerToTop);
     });
+  }
+
+  void _scrollPickerToTop() {
+    if (!mounted) {
+      return;
+    }
+
+    final context = _pickerKey.currentContext;
+    if (context == null) {
+      return;
+    }
+
+    Scrollable.ensureVisible(
+      context,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+      alignment: 0,
+      alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+    );
+  }
+}
+
+class _KeyboardObserver with WidgetsBindingObserver {
+  _KeyboardObserver({required this.onMetricsChanged});
+
+  final VoidCallback onMetricsChanged;
+
+  @override
+  void didChangeMetrics() {
+    onMetricsChanged();
   }
 }
