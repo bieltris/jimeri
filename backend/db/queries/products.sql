@@ -66,8 +66,20 @@ SELECT
     products.updated_at
 FROM products
 LEFT JOIN product_categories ON product_categories.id = products.category_id
+LEFT JOIN (
+    SELECT
+        oi.product_id,
+        COALESCE(SUM(oi.quantity), 0)::bigint AS total_ordered_quantity
+    FROM order_items oi
+    JOIN orders o ON o.id = oi.order_id
+    WHERE o.cancelled_at IS NULL
+    GROUP BY oi.product_id
+) product_popularity ON product_popularity.product_id = products.id
 WHERE products.active = true
-ORDER BY product_categories.name ASC NULLS LAST, products.name ASC;
+ORDER BY
+    COALESCE(product_popularity.total_ordered_quantity, 0) DESC,
+    product_categories.name ASC NULLS LAST,
+    products.name ASC;
 
 -- name: UpdateProduct :one
 WITH updated AS (
