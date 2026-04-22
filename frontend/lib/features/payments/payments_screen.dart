@@ -21,10 +21,18 @@ class PaymentsScreen extends ConsumerStatefulWidget {
 }
 
 class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
+  final _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     Future.microtask(ref.read(paymentsProvider.notifier).loadClients);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -36,6 +44,7 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
       title: 'Pagamentos',
       description: 'Registre valores recebidos e acompanhe baixas por cliente.',
       onRefresh: _refreshPage,
+      scrollController: _scrollController,
       action: FilledButton.icon(
         onPressed: selectedClient == null || state.isSaving || state.isLoading
             ? null
@@ -58,7 +67,10 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
             ),
             const SizedBox(height: 16),
           ],
-          _PaymentsClientPicker(state: state),
+          _PaymentsClientPicker(
+            state: state,
+            scrollController: _scrollController,
+          ),
           const SizedBox(height: 16),
           if (selectedClient != null)
             Text(
@@ -250,9 +262,11 @@ class _PaymentsList extends StatelessWidget {
 class _PaymentsClientPicker extends ConsumerStatefulWidget {
   const _PaymentsClientPicker({
     required this.state,
+    required this.scrollController,
   });
 
   final PaymentsState state;
+  final ScrollController scrollController;
 
   @override
   ConsumerState<_PaymentsClientPicker> createState() =>
@@ -527,12 +541,24 @@ class _PaymentsClientPickerState extends ConsumerState<_PaymentsClientPicker> {
       return;
     }
 
-    Scrollable.ensureVisible(
-      context,
+    final renderObject = context.findRenderObject();
+    if (renderObject == null) {
+      return;
+    }
+
+    final viewport = RenderAbstractViewport.of(renderObject);
+    if (viewport == null) {
+      return;
+    }
+
+    final target = viewport.getOffsetToReveal(renderObject, 0).offset;
+    final maxScroll = widget.scrollController.position.maxScrollExtent;
+    final clamped = target.clamp(0.0, maxScroll);
+
+    widget.scrollController.animateTo(
+      clamped,
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOut,
-      alignment: 0,
-      alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtStart,
     );
   }
 }

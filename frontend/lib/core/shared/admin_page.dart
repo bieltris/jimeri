@@ -10,6 +10,7 @@ class AdminPage extends StatelessWidget {
     this.floatingOverlay,
     this.onRefresh,
     this.showBackButton = true,
+    this.scrollController,
     super.key,
   });
 
@@ -20,10 +21,13 @@ class AdminPage extends StatelessWidget {
   final Widget? floatingOverlay;
   final Future<void> Function()? onRefresh;
   final bool showBackButton;
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
     final scrollView = SingleChildScrollView(
+      controller: scrollController,
+      primary: scrollController == null,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(24),
       child: Center(
