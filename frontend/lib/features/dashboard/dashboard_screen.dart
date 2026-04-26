@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/shared/page_feedback.dart';
 import '../../core/shared/responsive_dialog.dart';
+import '../../core/shared/skeleton_box.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/money.dart';
 import '../../dtos/client_with_balance_dto.dart';
@@ -106,7 +107,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Escolha uma area para continuar.',
+                                _greeting(),
                                 style: Theme.of(context).textTheme.bodyLarge,
                               ),
                             ],
@@ -178,6 +179,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Future<void> _refreshPage() async {
     return await ref.refresh(dashboardClientsProvider.future);
+  }
+
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Bom dia! Escolha uma area para continuar.';
+    if (hour < 18) return 'Boa tarde! Escolha uma area para continuar.';
+    return 'Boa noite! Escolha uma area para continuar.';
   }
 
   Future<void> _showDebtorsDialog(
@@ -276,16 +284,23 @@ class _DashboardSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: LinearProgressIndicator(),
-      );
-    }
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = constraints.maxWidth >= 720 ? 3 : 1;
+
+        if (isLoading) {
+          return GridView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              mainAxisExtent: columns == 1 ? 92 : 112,
+            ),
+            children: List.generate(3, (_) => const _SummaryCardSkeleton()),
+          );
+        }
 
         return GridView(
           shrinkWrap: true,
@@ -335,42 +350,56 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surface = Theme.of(context).colorScheme.surface;
     final iconColor = Theme.of(context).brightness == Brightness.dark
         ? Colors.white
         : Colors.black;
 
-    final content = Padding(
-      padding: const EdgeInsets.all(16),
+    final inner = ClipRRect(
+      borderRadius: BorderRadius.circular(8),
       child: Row(
         children: [
+          Container(width: 4, color: color),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                color: color,
+                                fontWeight: FontWeight.w900,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (onPressed != null) ...[
+                    const SizedBox(width: 12),
+                    Icon(Icons.arrow_forward_rounded, color: iconColor),
+                  ],
+                ],
+              ),
             ),
           ),
-          if (onPressed != null) ...[
-            const SizedBox(width: 12),
-            Icon(Icons.arrow_forward_rounded, color: iconColor),
-          ],
         ],
       ),
     );
@@ -378,16 +407,16 @@ class _SummaryCard extends StatelessWidget {
     if (onPressed == null) {
       return Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: surface,
           border: Border.all(color: AppColors.neutral300),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: content,
+        child: inner,
       );
     }
 
     return Material(
-      color: Theme.of(context).colorScheme.surface,
+      color: surface,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onPressed,
@@ -397,8 +426,33 @@ class _SummaryCard extends StatelessWidget {
             border: Border.all(color: AppColors.neutral300),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: content,
+          child: inner,
         ),
+      ),
+    );
+  }
+}
+
+class _SummaryCardSkeleton extends StatelessWidget {
+  const _SummaryCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border.all(color: AppColors.neutral300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          SkeletonBox(width: 100, height: 13),
+          SizedBox(height: 10),
+          SkeletonBox(width: 140, height: 24),
+        ],
       ),
     );
   }

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/shared/admin_page.dart';
 import '../../core/shared/adaptive_form_sheet.dart';
 import '../../core/shared/app_snackbar.dart';
+import '../../core/shared/skeleton_box.dart';
+import '../../core/theme/app_colors.dart';
 import '../../models/product_model.dart';
 import 'products_provider.dart';
 import 'widgets/product_form_dialog.dart';
@@ -47,12 +49,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           _ProductsFilters(state: state),
           const SizedBox(height: 20),
           if (state.isLoading)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(32),
-                child: CircularProgressIndicator(),
-              ),
-            )
+            const _ProductsListSkeleton()
           else if (products.isEmpty)
             const _EmptyProducts()
           else
@@ -230,6 +227,46 @@ class _EmptyProducts extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProductsListSkeleton extends StatelessWidget {
+  const _ProductsListSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(
+        5,
+        (_) => Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            border: Border.all(color: AppColors.neutral200),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Wrap(
+            spacing: 16,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonBox(width: 160, height: 15),
+                  SizedBox(height: 8),
+                  SkeletonBox(width: 90, height: 13),
+                ],
+              ),
+              SkeletonBox(width: 70, height: 20),
+              SkeletonBox(width: 56, height: 20),
+            ],
+          ),
+        ),
       ),
     );
   }

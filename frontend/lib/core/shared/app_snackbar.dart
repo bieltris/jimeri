@@ -14,7 +14,13 @@ class AppSnackBar {
     Duration duration = const Duration(seconds: 2),
     BuildContext? context,
   }) {
-    _show(message, AppColors.accent, duration: duration, context: context);
+    _show(
+      message,
+      AppColors.accent,
+      icon: Icons.check_circle_outline,
+      duration: duration,
+      context: context,
+    );
   }
 
   static void showError(
@@ -22,7 +28,13 @@ class AppSnackBar {
     Duration duration = const Duration(seconds: 3),
     BuildContext? context,
   }) {
-    _show(message, AppColors.error, duration: duration, context: context);
+    _show(
+      message,
+      AppColors.error,
+      icon: Icons.error_outline,
+      duration: duration,
+      context: context,
+    );
   }
 
   static void showWarning(
@@ -30,12 +42,19 @@ class AppSnackBar {
     Duration duration = const Duration(seconds: 3),
     BuildContext? context,
   }) {
-    _show(message, AppColors.warning, duration: duration, context: context);
+    _show(
+      message,
+      AppColors.warning,
+      icon: Icons.warning_amber_outlined,
+      duration: duration,
+      context: context,
+    );
   }
 
   static void _show(
     String message,
     Color backgroundColor, {
+    required IconData icon,
     Duration duration = const Duration(seconds: 3),
     BuildContext? context,
   }) {
@@ -95,12 +114,21 @@ class AppSnackBar {
                   ),
                 ],
               ),
-              child: Text(
-                message,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: Colors.white, size: 18),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      message,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

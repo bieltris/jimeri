@@ -5,6 +5,7 @@ import 'package:jimeri_frontend/core/shared/client_form_flow.dart';
 import '../../core/shared/admin_page.dart';
 import '../../core/shared/app_snackbar.dart';
 import '../../core/shared/page_feedback.dart';
+import '../../core/shared/skeleton_box.dart';
 import '../../core/platform/open_external_url.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/money.dart';
@@ -61,12 +62,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
           _ClientFilters(state: state),
           const SizedBox(height: 20),
           if (state.isLoading)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(32),
-                child: CircularProgressIndicator(),
-              ),
-            )
+            const _ClientsListSkeleton()
           else if (clients.isEmpty)
             _EmptyClients(state: state)
           else
@@ -381,6 +377,58 @@ class _EmptyClients extends StatelessWidget {
         message: isFiltering
             ? 'Ajuste a busca ou o filtro para encontrar um cliente.'
             : 'Cadastre o primeiro cliente para comecar a acompanhar as dividas.',
+      ),
+    );
+  }
+}
+
+class _ClientsListSkeleton extends StatelessWidget {
+  const _ClientsListSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(4, (index) => _ClientCardSkeleton(index: index)),
+    );
+  }
+}
+
+class _ClientCardSkeleton extends StatelessWidget {
+  const _ClientCardSkeleton({required this.index});
+
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border.all(color: AppColors.neutral200),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Wrap(
+        spacing: 16,
+        runSpacing: 12,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          SizedBox(
+            width: 360,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonBox(width: 180, height: 16),
+                SizedBox(height: 8),
+                SkeletonBox(width: 120, height: 13),
+                SizedBox(height: 6),
+                SkeletonBox(width: 150, height: 13),
+              ],
+            ),
+          ),
+          SkeletonBox(width: 80, height: 20),
+        ],
       ),
     );
   }
